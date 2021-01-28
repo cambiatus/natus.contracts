@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/**",
+                "/usr/local/opt/eosio.cdt/opt/eosio.cdt/include/eosiolib/core/**",
+                "/usr/local/opt/eosio.cdt/opt/eosio.cdt/include/eosiolib/contracts/**"
+            ],
+            "defines": [
+                "uint128_t=__uint128_t",
+                "int128_t=__int128_t",
+                "uint32_t=__uint32_t",
+                "int32_t=__int32_t"
+            ],
+            "macFrameworkPath": [],
+            "compilerPath": "/usr/local/bin/gcc-10",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "macos-gcc-x64"
+        }
+    ],
+    "version": 4
+}
