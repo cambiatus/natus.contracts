@@ -31,7 +31,7 @@ public:
      */
     TABLE units
     {
-        std::uint64_t id;
+        std::uint32_t id;
         eosio::name owner;
         std::string origin;
         // std::uint64_t harvest;
@@ -42,23 +42,39 @@ public:
 
         std::uint32_t planted_date;
 
-        std::uint64_t primary_key() const { return id; }
+        std::uint32_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(units, (id)(owner)(origin)(harvest)(report_hash)(biome)(location)(planted_date))
+        EOSLIB_SERIALIZE(units, (id)(owner)(origin)(harvest)(report_hash)(biome)(location)(planted_date));
     };
 
     // TODO: How should we include that? On issue directly?
-    TABLE unit_services
+    TABLE services
     {
-        std::uint64_t unit_id;
-        std::string category;    // TODO: must be `water`, `biodiversity` or `carbon`
-        std::string subcategory; // TODO: if water: `course` or `sprint`. if carbon: `capture`. if biodiversity: `vegetation`, `species`, `hotspot`
+        std::uint32_t id;
+        std::uint32_t unit_id;
+        std::string category;
+        std::string subcategory;
         std::float value;
+
+        std::uint32_t primary_key() const { return id; }
+
+        EOSLIB_SERIALIZE(services, (id)(unit_id)(category)(subcategory)(value));
     };
 
     TABLE harvest{};
 
-    TABLE rppn{};
+    TABLE rppn
+    {
+        std::uint32_t id;
+        eosio::name owner;
+        std::string name;
+        std::string biome;
+        std::string location;
+
+        std::uint32_t primary_key() const { return id; }
+
+        EOSLIB_SERIALIZE(rppn, (id)(owner)(name)(location)(biome));
+    };
 
     /**
      * Issue a new Natus Unit
@@ -81,5 +97,37 @@ public:
      * * Owner: Owner EOSIO Account, must be valid and exist. Also should be the owner of the given Natus Unit ID
      * * Date: Must be always on the format `dd/mm/aaaa`
      */
-    ACTION plant(std::uint64_t id, eosio::name owner, std::string date);
+    ACTION plant(std::uint32_t id, eosio::name owner, std::string date);
+
+    /**
+     * Upsert RPPN 
+     * Admin only action that insert or update an RPPN
+     * 
+     * Validations:
+     * * Id: ID of an existing service, send it as 0 to insert a new entry
+     * * Owner: Owner account for the RPPN
+     * * Name: Name for the RPPN, limited to 255 characters
+     * * Biome: Must be one of the following: `pantanal`, `atlanticflorest`, `amazonrainflorest`
+     * * Location: Make sure location is on the right format. Must be 0.000000-0.000000
+     */
+    ACTION upsertrppn(std::uint32_t id, eosio::name owner, std::string name, std::string biome, std::string location);
+
+    /**
+     * Upser services
+     * 
+     * It is an admin only action that insert or update an service. As Natus evolves new ecosystem services will be added
+     * Natus Units can have a basket different services with different values. 
+     * 
+     * Validations:
+     * * Id: ID of an existing service, send it as 0 to insert a new entry
+     * * Unit ID: Natus Unit ID. Must exist
+     * * Category: must be `water`, `biodiversity` or `carbon`
+     * * Sub category: 
+     * *    When category is `water`: `course` or `sprint`.
+     * *    When category is `carbon`: `capture`. 
+     * *    When category is `biodiversity`: `vegetation`, `species`, `hotspot`
+     * * Value: float value corresponding to the service provided
+     */
+    // TODO: Should we allow update on a Natus Unit services? does it makes sense?
+    ACTION upsertservices(std::uint32_t id, std::uint32_t unit_id, std::string category, std::string subcategory, std::float value);
 }
