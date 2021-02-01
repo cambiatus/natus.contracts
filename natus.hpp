@@ -97,7 +97,7 @@ public:
         std::string name;
         std::string biome;
         std::string location;
-        std::string country; // TODO: Check if there is an international country table
+        std::string country;
 
         std::uint32_t primary_key() const { return id; }
 
@@ -123,9 +123,8 @@ public:
      * Validations:
      * * ID: ID of the Natus Unit, must exist and not be planted yet
      * * Owner: Owner EOSIO Account, must be valid and exist. Also should be the owner of the given Natus Unit ID
-     * * Date: Must be always on the format `dd/mm/aaaa`
      */
-    ACTION plant(std::uint32_t id, eosio::name owner, std::string date);
+    ACTION plant(std::uint32_t id, eosio::name owner);
 
     /**
      * Upsert PPA 
@@ -139,7 +138,7 @@ public:
      * * Name: Name for the PPA, limited to 255 characters, can be updated
      * * Biome: Must be one of the following: `pantanal`, `atlanticflorest`, `amazonrainflorest`, `caatinga`, cannot be updated
      * * Location: Make sure location is on the right format. Must be 0.000000-0.000000, cannot be updated
-     * * Country: Country code where the PPA is located, cannot be updated
+     * * Country: Country where the PPA is located, cannot be updated, must be one of the following: `brazil`
      */
     ACTION upsertppa(std::uint32_t id, eosio::name owner, std::string name, std::string biome,
                      std::string location, std::string country);
@@ -155,15 +154,15 @@ public:
      * Keys are `PPA_id` and `harvest`
      * 
      * Validations:
-     * * Id: ID of an existing service, send it as 0 to insert a new entry
-     * * PPA ID: PPA ID. Must exist
-     * * Harvest ID: ID of an existing harvest
-     * * Category: must be `water`, `biodiversity` or `carbon`
-     * * Sub category: 
+     * * id: ID of an existing service, send it as 0 to insert a new entry
+     * * ppa_id: PPA ID of an existing PPA
+     * * harvest_id: ID of an existing harvest
+     * * category: must be `water`, `biodiversity` or `carbon`
+     * * sub_category: 
      * *    When category is `water`: `course` or `spring`.
      * *    When category is `carbon`: `stock`. 
      * *    When category is `biodiversity`: `vegetation`, `species`, `hotspot`
-     * * Value: float value corresponding to the service provided
+     * * value: float value corresponding to the service provided
      * 
      * ID   PPA_ID      Harvest     Category     Subcategory     Value
      * 1    gigante1    2020.1      water        spring          10
@@ -173,6 +172,15 @@ public:
     ACTION upsertservices(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id, std::string category,
                           std::string subcategory, std::float value);
 
-    // TODO: Create transfer
-    // Transfer must be blocked if is planted
+    /**
+     * Transfer ownership of a given Natus Unit
+     * Natus Units cannot be transferred if its already planted
+     * 
+     * Validations:
+     * * from: EOS account, must exist and need to be owner of the `unit_id` provided
+     * * to: EOS account, must exist
+     * * unit_id: ID of a Natus Unit
+     * * memo: Optional memo max 256 characters
+     */
+    ACTION transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, std::string memo);
 }
