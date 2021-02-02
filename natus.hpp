@@ -62,6 +62,14 @@ public:
         EOSLIB_SERIALIZE(units, (id)(owner)(origin)(harvest)(report_hash)(planted_at)(inserted_at)(updated_at));
     };
 
+    /**
+     * Eco services provided by a PPA during a Harvest.
+     * It allows for certain services to be informed on a PPA provided services on a given Harvest
+     * 
+     * Available `category`s: `water`, `carbon` and `biodiversity`
+     * Available `subcategory`s: `course`, `spring`, `stock`, `vegetation`, `species`, `hotspot`
+     * Value is a float, can be interpreted as tons, numbers, m2, etc
+     */
     TABLE ecoservices
     {
         std::uint32_t id;
@@ -76,6 +84,11 @@ public:
         EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(harvest_id)(category)(subcategory)(value));
     };
 
+    /**
+     * Harvest is the moment where an PPA generates new Natus Unit to the system
+     * 
+     * It involves also considering current investors, investors from the last harvest, etc
+     */
     TABLE harvest
     {
         std::uint32_t id;
@@ -89,6 +102,11 @@ public:
 
     /**
      * Central data structure, represents a PPA
+     * 
+     * PPAs can exist in different names depending on the country, with different legislations with the same country
+     * We rank the PPA based on a criterea on how good they are on preserve the nature, it also affects the initial price offering
+     * 
+     * PPAs can be updated to change its name, owner and ranking
     */
     TABLE ppa
     {
@@ -98,10 +116,11 @@ public:
         std::string biome;
         std::string location;
         std::string country;
+        std::string ranking;
 
         std::uint32_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(ppa, (id)(owner)(name)(biome)(location)(country));
+        EOSLIB_SERIALIZE(ppa, (id)(owner)(name)(biome)(location)(country)(ranking));
     };
 
     /**
@@ -114,8 +133,7 @@ public:
      * * Report Hash: must be 256 chars long using MD-5
      */
     ACTION issue(eosio::name to, eosio::name owner, std::string origin,
-                 std::string harvest, std::string report_hash std::string biome,
-                 std::string location);
+                 std::string harvest, std::string report_hash);
 
     /**
      * Plant a Natus Unit
@@ -130,18 +148,19 @@ public:
      * Upsert PPA 
      * Admin only action that insert or update an PPA
      * 
-     * Update only allows changes on `name` and `owner`
+     * Update only allows changes on `name`, `owner` and `ranking`
      * 
      * Validations:
-     * * Id: ID of an existing service, send it as 0 to insert a new entry
-     * * Owner: Owner account for the PPA, can be updated
-     * * Name: Name for the PPA, limited to 255 characters, can be updated
-     * * Biome: Must be one of the following: `pantanal`, `atlanticflorest`, `amazonrainflorest`, `caatinga`, cannot be updated
-     * * Location: Make sure location is on the right format. Must be 0.000000-0.000000, cannot be updated
-     * * Country: Country where the PPA is located, cannot be updated, must be one of the following: `brazil`
+     * * id: ID of an existing service, send it as 0 to insert a new entry
+     * * owner: Owner account for the PPA, can be updated
+     * * name: Name for the PPA, limited to 255 characters, can be updated
+     * * biome: Must be one of the following: `pantanal`, `atlanticflorest`, `amazonrainflorest`, `caatinga`, cannot be updated
+     * * location: Make sure location is on the right format. Must be 0.000000-0.000000, cannot be updated
+     * * country: Country where the PPA is located, cannot be updated, must be one of the following: `brazil`
+     * * ranking: ranking of the PPA, defined by Natuscoin Foundation
      */
     ACTION upsertppa(std::uint32_t id, eosio::name owner, std::string name, std::string biome,
-                     std::string location, std::string country);
+                     std::string location, std::string country, std::string ranking);
 
     /**
      * Upsert ecoservices
@@ -169,8 +188,8 @@ public:
      * 2    aranhas1    2020.1      water        course          3000
      * 3    gigante1    2021.1      carbon       stock           50
      */
-    ACTION upsertservices(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id, std::string category,
-                          std::string subcategory, std::float value);
+    ACTION upsertservices(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
+                          std::string category, std::string subcategory, std::float value);
 
     /**
      * Transfer ownership of a given Natus Unit
