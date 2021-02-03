@@ -1,0 +1,327 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.1",
+    "types": [],
+    "structs": [
+        {
+            "name": "clean",
+            "base": "",
+            "fields": [
+                {
+                    "name": "t",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "ecoservices",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "harvest_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "category",
+                    "type": "string"
+                },
+                {
+                    "name": "subcategory",
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "type": "float32"
+                }
+            ]
+        },
+        {
+            "name": "harvest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "year",
+                    "type": "uint32"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "issue",
+            "base": "",
+            "fields": [
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "origin",
+                    "type": "string"
+                },
+                {
+                    "name": "harvest",
+                    "type": "string"
+                },
+                {
+                    "name": "report_hash",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "plant",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "ppa",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "biome",
+                    "type": "string"
+                },
+                {
+                    "name": "location",
+                    "type": "string"
+                },
+                {
+                    "name": "country",
+                    "type": "string"
+                },
+                {
+                    "name": "ranking",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "transfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "unit_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "units",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "origin",
+                    "type": "string"
+                },
+                {
+                    "name": "harvest",
+                    "type": "string"
+                },
+                {
+                    "name": "report_hash",
+                    "type": "string"
+                },
+                {
+                    "name": "planted_at",
+                    "type": "uint32"
+                },
+                {
+                    "name": "inserted_at",
+                    "type": "uint64"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "upsertppa",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "biome",
+                    "type": "string"
+                },
+                {
+                    "name": "location",
+                    "type": "string"
+                },
+                {
+                    "name": "country",
+                    "type": "string"
+                },
+                {
+                    "name": "ranking",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "upsertsrv",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "harvest_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "category",
+                    "type": "string"
+                },
+                {
+                    "name": "subcategory",
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "type": "float32"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "clean",
+            "type": "clean",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "issue",
+            "type": "issue",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "plant",
+            "type": "plant",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "transfer",
+            "type": "transfer",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertppa",
+            "type": "upsertppa",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertsrv",
+            "type": "upsertsrv",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "ecoservices",
+            "type": "ecoservices",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "harvest",
+            "type": "harvest",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "ppa",
+            "type": "ppa",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "units",
+            "type": "units",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}

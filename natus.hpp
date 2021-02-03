@@ -77,7 +77,7 @@ public:
         std::uint32_t harvest_id;
         std::string category;
         std::string subcategory;
-        std::float value;
+        float value;
 
         std::uint32_t primary_key() const { return id; }
 
@@ -145,6 +145,18 @@ public:
     ACTION plant(std::uint32_t id, eosio::name owner);
 
     /**
+     * Transfer ownership of a given Natus Unit
+     * Natus Units cannot be transferred if its already planted
+     * 
+     * Validations:
+     * * from: EOS account, must exist and need to be owner of the `unit_id` provided
+     * * to: EOS account, must exist
+     * * unit_id: ID of a Natus Unit
+     * * memo: Optional memo max 256 characters
+     */
+    ACTION transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, std::string memo);
+
+    /**
      * Upsert PPA 
      * Admin only action that insert or update an PPA
      * 
@@ -187,19 +199,16 @@ public:
      * 1    gigante1    2020.1      water        spring          10
      * 2    aranhas1    2020.1      water        course          3000
      * 3    gigante1    2021.1      carbon       stock           50
-     */
-    ACTION upsertservices(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
-                          std::string category, std::string subcategory, std::float value);
-
-    /**
-     * Transfer ownership of a given Natus Unit
-     * Natus Units cannot be transferred if its already planted
      * 
-     * Validations:
-     * * from: EOS account, must exist and need to be owner of the `unit_id` provided
-     * * to: EOS account, must exist
-     * * unit_id: ID of a Natus Unit
-     * * memo: Optional memo max 256 characters
      */
-    ACTION transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, std::string memo);
-}
+    ACTION upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
+                     std::string category, std::string subcategory, float value);
+
+    // TODO: Remove this development only action
+    ACTION clean(std::string t);
+
+    typedef eosio::multi_index<eosio::name{"units"}, units> units_table;
+    typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
+    typedef eosio::multi_index<eosio::name{"harvest"}, harvest> harvest_table;
+    typedef eosio::multi_index<eosio::name{"ppa"}, ppa> ppa_table;
+};
