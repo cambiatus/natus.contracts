@@ -1,6 +1,5 @@
 #include "natus.hpp"
 
-
 std::vector<std::string> split(std::string str, std::string delim)
 {
     std::vector<std::string> result;
@@ -62,8 +61,8 @@ void natus::upsertppa(std::uint32_t id, eosio::name owner, std::string name, std
     // Validate location
     std::vector<std::string> latlon_split = split(location, ",");
     eosio::check(latlon_split.size() == 2, "cant parse location, must be formated like: 0.000000,-0.000000");
-    eosio::check(latlon_split[0].length() >= 8 && latlon_split[0].length() >= 10, "cant parse location latitude");
-    eosio::check(latlon_split[1].length() >= 8 && latlon_split[1].length() >= 10, "cant parse location longitude");
+    eosio::check(latlon_split[0].length() >= 8 && latlon_split[0].length() <= 10, "cant parse location latitude");
+    eosio::check(latlon_split[1].length() >= 8 && latlon_split[1].length() <= 10, "cant parse location longitude");
 
     bool is_country_valid = country == "brazil";
     eosio::check(is_country_valid, "invalid value for country must be one of the following:  `brazil`");
@@ -85,8 +84,8 @@ void natus::upsertppa(std::uint32_t id, eosio::name owner, std::string name, std
     }
     else
     {
-        auto itr = ppa.find(id); 
-        eosio::check(itr != ppa.end(), "cannot find RRPN with given ID");
+        auto itr = ppa.find(id);
+        eosio::check(itr != ppa.end(), "cannot find PPA with given ID");
         ppa.modify(itr, _self, [&](auto &p) {
             p.name = name;
             p.location = location;
@@ -97,7 +96,38 @@ void natus::upsertppa(std::uint32_t id, eosio::name owner, std::string name, std
 };
 
 void natus::upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
-                      std::string category, std::string subcategory, float value){};
+                      std::string category, std::string subcategory, float value)
+{
+    require_auth(_self);
+};
+
+void natus::upserthrvst(std::uint32_t id, std::uint32_t year, std::string name)
+{
+    require_auth(_self);
+
+    eosio::check(year >= 2021, "year invalid, must be at least 2021");
+    eosio::check(name.length() <= 256, "invalid length for the name, must be under 255 chars");
+
+    harvest_table harvest(_self, _self.value);
+
+    if (id == 0)
+    {
+        harvest.emplace(_self, [&](auto &h) {
+            h.id = harvest.available_primary_key() == 0 ? 1 : harvest.available_primary_key();
+            h.year = year;
+            h.name = name;
+        });
+    }
+    else
+    {
+        auto itr = harvest.find(id);
+        eosio::check(itr != harvest.end(), "cannot find harvest with given ID");
+        harvest.modify(itr, _self, [&](auto &h) {
+            h.year = year;
+            h.name = name;
+        });
+    }
+}
 
 void natus::clean(std::string t)
 {
@@ -141,4 +171,3 @@ void natus::clean(std::string t)
         }
     }
 }
-

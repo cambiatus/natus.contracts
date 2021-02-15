@@ -204,6 +204,16 @@ public:
     ACTION upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
                      std::string category, std::string subcategory, float value);
 
+    /**
+     * Adds a Harvest to the system. Usually they happen anually but can happen other times in special cases.
+     * 
+     * Validations:
+     * - ID: Used to update an existing harvest, send 0 to create a new one
+     * - Year: Year of the harvest, must be at least 2021
+     * - Name: Name of the harvest, must be less than 255 characters
+     */
+    ACTION upserthrvst(std::uint32_t id, std::uint32_t year, std::string name);
+
     // TODO: Remove this development only action
     ACTION clean(std::string t);
 

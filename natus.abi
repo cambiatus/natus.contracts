@@ -196,6 +196,24 @@
             ]
         },
         {
+            "name": "upserthrvst",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "year",
+                    "type": "uint32"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "upsertppa",
             "base": "",
             "fields": [
@@ -279,6 +297,11 @@
         {
             "name": "transfer",
             "type": "transfer",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upserthrvst",
+            "type": "upserthrvst",
             "ricardian_contract": ""
         },
         {
