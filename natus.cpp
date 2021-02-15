@@ -99,6 +99,61 @@ void natus::upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harv
                       std::string category, std::string subcategory, float value)
 {
     require_auth(_self);
+
+    // Validate PPA
+    ppa_table ppa(_self, _self.value);
+    auto itr_ppa = ppa.find(ppa_id);
+    eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
+
+    // Validate Harvest
+    harvest_table harvest(_self, _self.value);
+    auto itr_harvest = harvest.find(harvest_id);
+    eosio::check(itr_harvest != harvest.end(), "cant find harvest with given harvest_id");
+
+    // Validate Category
+    bool is_category_valid = category == "water" || category == "biodiversity" || category == "carbon";
+    eosio::check(is_category_valid, "invalid value for category, must be one of the following: `water`, `biodiversity` or `carbon`");
+
+    // Validate Subcategory
+    if (category == "water")
+    {
+        eosio::check(subcategory == "spring" || subcategory == "course", "invalid subcategory for category 'water");
+    }
+
+    if (category == "biodiversity")
+    {
+        eosio::check(subcategory == "vegetation" || subcategory == "species" || subcategory == "hotspot", "invalid subcategory for category 'biodiversity'");
+    }
+
+    if (category == "carbon")
+    {
+        eosio::check(subcategory == "stock", "invalid subcategory for category 'carbon'");
+    }
+
+    ecoservices_table ecoservices(_self, _self.value);
+    if (id == 0)
+    {
+        ecoservices.emplace(_self, [&](auto &e) {
+            e.id = ecoservices.available_primary_key() == 0 ? 1 : ecoservices.available_primary_key();
+            e.ppa_id = ppa_id;
+            e.harvest_id = harvest_id;
+            e.category = category;
+            e.subcategory = subcategory;
+            e.value = value;
+        });
+    }
+    else
+    {
+        auto itr = ecoservices.find(id);
+        eosio::check(itr != ecoservices.end(), "cannot find ecoservice with given ID");
+        ecoservices.modify(itr, _self, [&](auto &e) {
+            e.ppa_id = ppa_id;
+            e.harvest_id = harvest_id;
+            e.category = category;
+            e.subcategory = subcategory;
+            e.value = value;
+        });
+    }
 };
 
 void natus::upserthrvst(std::uint32_t id, std::uint32_t year, std::string name)
