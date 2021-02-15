@@ -18,5 +18,8 @@ deploy:
 	make
 	cleos -u $(url) set contract $(contract) ../natus --use-old-rpc
 
+erase:
+	cleos -u $(url) push action $(contract) clean '["ppa"]' -p $(authorization)
+
 fill:
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Orion", "atlanticflorest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Orion", "atlanticforest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)

@@ -166,7 +166,7 @@ public:
      * * id: ID of an existing service, send it as 0 to insert a new entry
      * * owner: Owner account for the PPA, can be updated
      * * name: Name for the PPA, limited to 255 characters, can be updated
-     * * biome: Must be one of the following: `pantanal`, `atlanticflorest`, `amazonrainflorest`, `caatinga`, cannot be updated
+     * * biome: Must be one of the following: `pantanal`, `atlanticforest`, `amazonrainforest`, `caatinga`, cannot be updated
      * * location: Make sure location is on the right format. Must be 0.000000-0.000000, cannot be updated
      * * country: Country where the PPA is located, cannot be updated, must be one of the following: `brazil`
      * * ranking: ranking of the PPA, defined by Natuscoin Foundation
