@@ -47,17 +47,17 @@ public:
      */
     TABLE units
     {
-        std::uint32_t id;
+        std::uint64_t id;
         eosio::name owner;
         std::string origin;
         std::string harvest;
         std::string report_hash;
 
-        std::uint32_t planted_at;
+        std::uint64_t planted_at;
         std::uint64_t inserted_at;
         std::uint64_t updated_at;
 
-        std::uint32_t primary_key() const { return id; }
+        std::uint64_t primary_key() const { return id; }
 
         EOSLIB_SERIALIZE(units, (id)(owner)(origin)(harvest)(report_hash)(planted_at)(inserted_at)(updated_at));
     };
@@ -72,14 +72,14 @@ public:
      */
     TABLE ecoservices
     {
-        std::uint32_t id;
-        std::uint32_t ppa_id;
-        std::uint32_t harvest_id;
+        std::uint64_t id;
+        std::uint64_t ppa_id;
+        std::uint64_t harvest_id;
         std::string category;
         std::string subcategory;
         float value;
 
-        std::uint32_t primary_key() const { return id; }
+        std::uint64_t primary_key() const { return id; }
 
         EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(harvest_id)(category)(subcategory)(value));
     };
@@ -91,11 +91,11 @@ public:
      */
     TABLE harvest
     {
-        std::uint32_t id;
-        std::uint32_t year;
+        std::uint64_t id;
+        std::uint64_t year;
         std::string name; // Eg.: "2021.1", "2021.2"
 
-        std::uint32_t primary_key() const { return id; }
+        std::uint64_t primary_key() const { return id; }
 
         EOSLIB_SERIALIZE(harvest, (id)(year)(name));
     };
@@ -110,7 +110,7 @@ public:
     */
     TABLE ppa
     {
-        std::uint32_t id;
+        std::uint64_t id;
         eosio::name owner;
         std::string name;
         std::string biome;
@@ -118,7 +118,7 @@ public:
         std::string country;
         std::string ranking;
 
-        std::uint32_t primary_key() const { return id; }
+        std::uint64_t primary_key() const { return id; }
 
         EOSLIB_SERIALIZE(ppa, (id)(owner)(name)(biome)(location)(country)(ranking));
     };
@@ -128,12 +128,12 @@ public:
      * 
      * Validations:
      * * Owner: Owner EOSIO Account, must be valid and exist
-     * * Origin: Origin PPA ID, must be present in the PPA table
+     * * PPA ID: Origin PPA ID, must be present in the PPA table
      * * Harvest: Harvest ID, must be present on the Havest table
      * * Report Hash: must be 256 chars long using MD-5
      */
-    ACTION issue(eosio::name to, eosio::name owner, std::string origin,
-                 std::string harvest, std::string report_hash);
+    ACTION issue(eosio::name to, eosio::name owner, std::uint64_t ppa_id,
+                 std::uint64_t harvest_id, std::string report_hash);
 
     /**
      * Plant a Natus Unit
@@ -142,7 +142,7 @@ public:
      * * ID: ID of the Natus Unit, must exist and not be planted yet
      * * Owner: Owner EOSIO Account, must be valid and exist. Also should be the owner of the given Natus Unit ID
      */
-    ACTION plant(std::uint32_t id, eosio::name owner);
+    ACTION plant(std::uint64_t id, eosio::name owner);
 
     /**
      * Transfer ownership of a given Natus Unit
@@ -154,7 +154,7 @@ public:
      * * unit_id: ID of a Natus Unit
      * * memo: Optional memo max 256 characters
      */
-    ACTION transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, std::string memo);
+    ACTION transfer(eosio::name from, eosio::name to, std::uint64_t unit_id, std::string memo);
 
     /**
      * Upsert PPA 
@@ -171,7 +171,7 @@ public:
      * * country: Country where the PPA is located, cannot be updated, must be one of the following: `brazil`
      * * ranking: ranking of the PPA, defined by Natuscoin Foundation
      */
-    ACTION upsertppa(std::uint32_t id, eosio::name owner, std::string name, std::string biome,
+    ACTION upsertppa(std::uint64_t id, eosio::name owner, std::string name, std::string biome,
                      std::string location, std::string country, std::string ranking);
 
     /**
@@ -201,7 +201,7 @@ public:
      * 3    gigante1    2021.1      carbon       stock           50
      * 
      */
-    ACTION upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
+    ACTION upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harvest_id,
                      std::string category, std::string subcategory, float value);
 
     /**
@@ -212,7 +212,7 @@ public:
      * - Year: Year of the harvest, must be at least 2021
      * - Name: Name of the harvest, must be less than 255 characters
      */
-    ACTION upserthrvst(std::uint32_t id, std::uint32_t year, std::string name);
+    ACTION upserthrvst(std::uint64_t id, std::uint64_t year, std::string name);
 
     // TODO: Remove this development only action
     ACTION clean(std::string t);

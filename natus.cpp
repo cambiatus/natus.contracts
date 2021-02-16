@@ -22,12 +22,29 @@ std::vector<std::string> split(std::string str, std::string delim)
     return result;
 }
 
-void natus::issue(eosio::name to, eosio::name owner, std::string origin,
-                  std::string harvest, std::string report_hash){};
+void natus::issue(eosio::name to, eosio::name owner, std::uint64_t ppa_id,
+                  std::uint64_t harvest_id, std::string report_hash)
+{
+    require_auth(_self);
 
-void natus::plant(std::uint32_t id, eosio::name owner){};
+    eosio::check(is_account(to), "to account doesn't exist");
+    eosio::check(is_account(owner), "owner account doesn't exist");
 
-void natus::transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, std::string memo)
+    ppa_table ppa(_self, _self.value);
+    auto itr_ppa = ppa.find(ppa_id);
+    eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
+
+    // Validate Harvest
+    harvest_table harvest(_self, _self.value);
+    auto itr_harvest = harvest.find(harvest_id);
+    eosio::check(itr_harvest != harvest.end(), "cant find harvest with given harvest_id");
+
+    units_table units(_self, _self.value));
+};
+
+void natus::plant(std::uint64_t id, eosio::name owner){};
+
+void natus::transfer(eosio::name from, eosio::name to, std::uint64_t unit_id, std::string memo)
 {
     eosio::check(from != to, "cannot transfer to self");
     eosio::check(is_account(to), "destination account doesn't exists");
@@ -42,12 +59,10 @@ void natus::transfer(eosio::name from, eosio::name to, std::uint32_t unit_id, st
         u.owner = to;
     });
 
-    // TODO: What happens with scope when changing owners?
-
     // TODO: Update Natus to change owner
 }
 
-void natus::upsertppa(std::uint32_t id, eosio::name owner, std::string name, std::string biome,
+void natus::upsertppa(std::uint64_t id, eosio::name owner, std::string name, std::string biome,
                       std::string location, std::string country, std::string ranking)
 {
     require_auth(_self);
@@ -95,7 +110,7 @@ void natus::upsertppa(std::uint32_t id, eosio::name owner, std::string name, std
     }
 };
 
-void natus::upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harvest_id,
+void natus::upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harvest_id,
                       std::string category, std::string subcategory, float value)
 {
     require_auth(_self);
@@ -156,7 +171,7 @@ void natus::upsertsrv(std::uint32_t id, std::uint32_t ppa_id, std::uint32_t harv
     }
 };
 
-void natus::upserthrvst(std::uint32_t id, std::uint32_t year, std::string name)
+void natus::upserthrvst(std::uint64_t id, std::uint64_t year, std::string name)
 {
     require_auth(_self);
 

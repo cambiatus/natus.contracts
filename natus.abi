@@ -19,15 +19,15 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "ppa_id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "harvest_id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "category",
@@ -49,11 +49,11 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "year",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "name",
@@ -74,12 +74,12 @@
                     "type": "name"
                 },
                 {
-                    "name": "origin",
-                    "type": "string"
+                    "name": "ppa_id",
+                    "type": "uint64"
                 },
                 {
-                    "name": "harvest",
-                    "type": "string"
+                    "name": "harvest_id",
+                    "type": "uint64"
                 },
                 {
                     "name": "report_hash",
@@ -93,7 +93,7 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "owner",
@@ -107,7 +107,7 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "owner",
@@ -149,7 +149,7 @@
                 },
                 {
                     "name": "unit_id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "memo",
@@ -163,7 +163,7 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "owner",
@@ -183,7 +183,7 @@
                 },
                 {
                     "name": "planted_at",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "inserted_at",
@@ -201,11 +201,11 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "year",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "name",
@@ -219,7 +219,7 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "owner",
@@ -253,15 +253,15 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "ppa_id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "harvest_id",
-                    "type": "uint32"
+                    "type": "uint64"
                 },
                 {
                     "name": "category",
