@@ -14,6 +14,28 @@
             ]
         },
         {
+            "name": "config",
+            "base": "",
+            "fields": [
+                {
+                    "name": "natus_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                },
+                {
+                    "name": "last_serial_number",
+                    "type": "uint64"
+                },
+                {
+                    "name": "total_issued_supply",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
             "name": "ecoservices",
             "base": "",
             "fields": [
@@ -48,16 +70,44 @@
             "base": "",
             "fields": [
                 {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "year",
-                    "type": "uint64"
-                },
-                {
                     "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
+                    "name": "transferable",
+                    "type": "bool"
+                },
+                {
+                    "name": "max_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "current_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "issued_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "available_window",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "base_uri",
                     "type": "string"
+                },
+                {
+                    "name": "created_at",
+                    "type": "time_point_sec"
                 }
             ]
         },
@@ -70,16 +120,16 @@
                     "type": "name"
                 },
                 {
-                    "name": "owner",
+                    "name": "ppa",
                     "type": "name"
                 },
                 {
-                    "name": "ppa_id",
-                    "type": "uint64"
+                    "name": "harvest",
+                    "type": "name"
                 },
                 {
-                    "name": "harvest_id",
-                    "type": "uint64"
+                    "name": "quantity",
+                    "type": "asset"
                 },
                 {
                     "name": "report_hash",
@@ -136,6 +186,54 @@
             ]
         },
         {
+            "name": "setconfig",
+            "base": "",
+            "fields": [
+                {
+                    "name": "natus_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "sow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "sellable",
+                    "type": "bool"
+                },
+                {
+                    "name": "transferable",
+                    "type": "bool"
+                },
+                {
+                    "name": "max_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "issue_days",
+                    "type": "uint32"
+                },
+                {
+                    "name": "base_uri",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "transfer",
             "base": "",
             "fields": [
@@ -170,46 +268,32 @@
                     "type": "name"
                 },
                 {
-                    "name": "origin",
-                    "type": "string"
+                    "name": "ppa_origin",
+                    "type": "name"
                 },
                 {
                     "name": "harvest",
-                    "type": "string"
+                    "type": "name"
+                },
+                {
+                    "name": "serial_number",
+                    "type": "uint64"
                 },
                 {
                     "name": "report_hash",
-                    "type": "string"
+                    "type": "string?"
                 },
                 {
                     "name": "planted_at",
-                    "type": "uint64"
+                    "type": "time_point_sec"
                 },
                 {
-                    "name": "inserted_at",
-                    "type": "uint64"
+                    "name": "issued_at",
+                    "type": "time_point_sec"
                 },
                 {
                     "name": "updated_at",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "upserthrvst",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "year",
-                    "type": "uint64"
-                },
-                {
-                    "name": "name",
-                    "type": "string"
+                    "type": "time_point_sec"
                 }
             ]
         },
@@ -295,13 +379,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "transfer",
-            "type": "transfer",
+            "name": "setconfig",
+            "type": "setconfig",
             "ricardian_contract": ""
         },
         {
-            "name": "upserthrvst",
-            "type": "upserthrvst",
+            "name": "sow",
+            "type": "sow",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "transfer",
+            "type": "transfer",
             "ricardian_contract": ""
         },
         {
@@ -316,6 +405,13 @@
         }
     ],
     "tables": [
+        {
+            "name": "config",
+            "type": "config",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
         {
             "name": "ecoservices",
             "type": "ecoservices",

@@ -22,13 +22,24 @@ std::vector<std::string> split(std::string str, std::string delim)
     return result;
 }
 
-void natus::sow(std::uint64_t id,
-                eosio::name name,
+void natus::setconfig(eosio::symbol natus_symbol, std::string version)
+{
+    require_auth(_self);
+
+    eosio::check(natus_symbol.is_valid(), "provided symbol is not valid");
+
+    auto configs = configs_singleton.get_or_create(_self, config{natus_symbol, version, 0, eosio::asset(0, natus_symbol)});
+
+    configs.version = version;
+    configs_singleton.set(configs, _self);
+}
+
+void natus::sow(eosio::name name,
                 eosio::name issuer,
-                std::bool sellable,
-                std::bool transferable,
+                bool sellable,
+                bool transferable,
                 eosio::asset max_supply,
-                std::time_point_sec issue_days;
+                std::uint32_t issue_days,
                 std::string base_uri)
 {
     require_auth(_self);
@@ -38,57 +49,58 @@ void natus::sow(std::uint64_t id,
     require_recipient(issuer);
 
     // Calculate max issue window
-    time_point_sec issue_window = time_point_sec(0);
-    issue_seconds = issue_days * 24 * 3600;
-    issue_window = time_point_sec(current_time_point()) + issue_seconds;
+    eosio::time_point_sec issue_window = eosio::time_point_sec(0);
+    std::uint32_t issue_seconds = issue_days * 24 * 3600;
+    issue_window = eosio::time_point_sec(eosio::current_time_point()) + issue_seconds;
 
+    // Validate Supply information
     eosio::check(max_supply.is_valid(), "invalid max_supply");
     eosio::check(max_supply.symbol.is_valid(), "invalid symbol");
     eosio::check(max_supply.amount >= 0, "max supply must be 0 or greater");
     eosio::check(max_supply.symbol.precision() == 0, "max supply must have precision of 0");
-    eosio::check(max_supply.symbol.code() == "NSTU", "max supply symbol must NSTU");
+
+    auto config = configs_singleton.get();
+    eosio::check(max_supply.symbol == config.natus_symbol, "max supply symbol must be" + config.natus_symbol.code().to_string());
 
     eosio::check(base_uri.length() <= 255, "base_uri must be less than 256 characters");
 
-    // TODO: grab this from singleton stats table
-    eosio::asset initial_asset = eosio::asset(0, "NSTU");
+    eosio::asset initial_asset = eosio::asset(0, config.natus_symbol);
 
     harvest_table harvest(_self, _self.value);
+    auto existing_harvest = harvest.find(name.value);
 
-    // TODO: Harvest name must be unique
-    if (id == 0)
+    if (existing_harvest == harvest.end())
     {
-
         harvest.emplace(_self, [&](auto &h) {
-            // TODO: Improve primary key management
-            h.id = harvest.available_primary_key() == 0 ? 1 : harvest.available_primary_key();
             h.name = name;
+            h.issuer = issuer;
             h.sellable = sellable;
             h.transferable = transferable;
             h.max_supply = max_supply;
             h.current_supply = initial_asset;
             h.issued_supply = initial_asset;
-            h.issue_window = issue_window;
+            h.available_window = issue_window;
             h.base_uri = base_uri;
-            h.created_at = current_time_point();
+            h.created_at = eosio::current_time_point();
         });
     }
     else
     {
-        auto itr = harvest.find(id);
-        eosio::check(itr != harvest.end(), "cannot find harvest with given ID");
-        harvest.modify(itr, _self, [&](auto &h) {
+        harvest.modify(existing_harvest, _self, [&](auto &h) {
             h.name = name;
             h.sellable = sellable;
             h.transferable = transferable;
-            h.issue_window = issue_window;
+            h.available_window = issue_window;
             h.base_uri = base_uri;
         });
     }
 }
 
-void natus::issue(eosio::name to, eosio::name owner, std::uint64_t ppa_id,
-                  std::uint64_t harvest_id, std::string report_hash){
+void natus::issue(eosio::name to,
+                  eosio::name ppa,
+                  eosio::name harvest,
+                  eosio::asset quantity,
+                  std::string report_hash){
 
     // TODO: Make sure to use last_serial_number from stats
     // require_auth(_self);
@@ -128,8 +140,13 @@ void natus::transfer(eosio::name from, eosio::name to, std::uint64_t unit_id, st
     // // TODO: Update Natus to change owner
 }
 
-void natus::upsertppa(std::uint64_t id, eosio::name owner, std::string name, std::string biome,
-                      std::string location, std::string country, std::string ranking)
+void natus::upsertppa(std::uint64_t id,
+                      eosio::name owner,
+                      std::string name,
+                      std::string biome,
+                      std::string location,
+                      std::string country,
+                      std::string ranking)
 {
     require_auth(_self);
 

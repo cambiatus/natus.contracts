@@ -11,6 +11,29 @@ class [[eosio::contract("natus")]] natus : public eosio::contract
 public:
     using contract::contract;
 
+    // Constructor
+    natus(eosio::name receiver,
+          eosio::name code,
+          eosio::datastream<const char *> ds)
+        : contract(receiver, code, ds),
+          configs_singleton(receiver, receiver.value) {}
+
+    /**
+     * Singleton table that holds contract general stats and configurations
+     * 
+     * * natus_symbol: Natus units symbol
+     * * version: Current version of the contract
+     * * last_serial_number: system's last used serial number
+     * * total_issued_supply: system wide issued Natus Units
+     */
+    TABLE config
+    {
+        eosio::symbol natus_symbol;       // Symbol used to represent Natus Units
+        std::string version;              // Current version for the contract
+        std::uint64_t last_serial_number; // Last used serial number
+        eosio::asset total_issued_supply; // Total supply of Natus Unit issued, counts planted ones
+    };
+
     /**
      * Table that holds information about all Natus Units
      * Natus Unit is a digital good that represents a basket of services provided by a given PPA (see links below) in a given period called `harvest`
@@ -31,19 +54,19 @@ public:
     {
         // Scope is harvest.value()
         std::uint64_t id;
-        eosio::name owner;                    // Current Owner
-        eosio::name ppa_origin;               // PPA that created the Unit
-        eosio::name harvest;                  // Harvest where it comes from
-        std::uint64_t serial_number;          // Serial number for external reference
-        std::option<std::string> report_hash; // hash for the report, should be used together with harvest.base_uri
-        time_point_sec planted_at;            // Date of planting, if its zero, it still havent been planted yet
-        time_point_sec issued_at;             // Date of issuing
-        time_point_sec updated_at;            // Last update date (transfer and plant change this value)
+        eosio::name owner;                      // Current Owner
+        eosio::name ppa_origin;                 // PPA that created the Unit
+        eosio::name harvest;                    // Harvest where it comes from
+        std::uint64_t serial_number;            // Serial number for external reference
+        std::optional<std::string> report_hash; // hash for the report, should be used together with harvest.base_uri
+        eosio::time_point_sec planted_at;       // Date of planting, if its zero, it still havent been planted yet
+        eosio::time_point_sec issued_at;        // Date of issuing
+        eosio::time_point_sec updated_at;       // Last update date (transfer and plant change this value)
 
         std::uint64_t primary_key() const { return id; }
         std::uint64_t get_owner() const { return owner.value; }
 
-        EOSLIB_SERIALIZE(units, (id)(owner)(ppa_origin)(harvest)(serial_number)(report_hash)(planted_at)(inserted_at)(updated_at));
+        EOSLIB_SERIALIZE(units, (id)(owner)(ppa_origin)(harvest)(serial_number)(report_hash)(planted_at)(issued_at)(updated_at));
     };
 
     /**
@@ -65,35 +88,20 @@ public:
     TABLE harvest
     {
         // Scope is _self
-        eosio::name name;                 // Eg.: "2021.1", "2021.2"
-        eosio::name issuer;               // Issuer account
-        std::bool sellable;               // Informs if its sellable
-        std::bool transferable;           // Informs if its transferable
-        eosio::asset max_supply;          // Whole harvest assets
-        eosio::asset current_supply;      // Supply in circulation, don't include planted units
-        eosio::asset issued_supply;       // Everything issued so far
-        std::time_point_sec issue_window; // Max issue date
-        std::string base_uri;             // Base URI for the Harvest Units
-        std::time_point_sec created_at;   // Date of creation
+        eosio::name name;                       // Eg.: "2021.1", "2021.2"
+        eosio::name issuer;                     // Issuer account
+        bool sellable;                          // Informs if its sellable
+        bool transferable;                      // Informs if its transferable
+        eosio::asset max_supply;                // Whole harvest assets
+        eosio::asset current_supply;            // Supply in circulation, don't include planted units
+        eosio::asset issued_supply;             // Everything issued so far
+        eosio::time_point_sec available_window; // Max available date (Transfer, Plant or Issue)
+        std::string base_uri;                   // Base URI for the Harvest Units
+        eosio::time_point_sec created_at;       // Date of creation
 
-        std::uint64_t primary_key() const { return name.value(); }
+        std::uint64_t primary_key() const { return name.value; }
 
-        EOSLIB_SERIALIZE(harvest, (id)(name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(issue_window)(base_uri)(created_at));
-    };
-
-    /**
-     * Singleton table that holds contract general stats
-     * 
-     * * natus_symbol: Natus units symbol
-     * * version: Current version of the contract
-     */
-    TABLE stats
-    {
-        // TODO: add makefile build process to set version
-        eosio::symbol natus_symbol;       // Symbol used to represent Natus Units
-        std::string version;              // Current version for the contract
-        std::uint64_t last_serial_number; // Last used serial number
-        eosio::asset total_supply;        // Total supply of Natus Issued, counts planted ones
+        EOSLIB_SERIALIZE(harvest, (name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(available_window)(base_uri)(created_at));
     };
 
     /**
@@ -130,7 +138,7 @@ public:
     {
         std::uint64_t id;
         eosio::name owner;
-        eosio::name name;
+        std::string name;
         std::string biome;
         std::string location;
         std::string country;
@@ -159,25 +167,24 @@ public:
      */
     ACTION sow(eosio::name name,
                eosio::name issuer,
-               std::bool sellable,
-               std::bool transferable,
+               bool sellable,
+               bool transferable,
                eosio::asset max_supply,
-               std::time_point_sec issue_days;
+               std::uint32_t issue_days,
                std::string base_uri);
 
     /**
      * Issue a new Natus Unit
      * 
-     * Validations:
-     * * Owner: Owner EOSIO Account, must be valid and exist
-     * * PPA ID: Origin PPA ID, must be present in the PPA table
-     * * Harvest: Harvest ID, must be present on the Havest table
-     * * Report Hash: must be 256 chars long using MD-5
+     * * to: destination EOSIO account, must be valid and exist
+     * * ppa: origin PPA ID, must be present in the PPA table
+     * * harvest: harvest name, must be present on the Havest table
+     * * report_hash: hash of the report corresponding to this PPA's Natus Units
      */
     ACTION issue(eosio::name to,
-                 eosio::name owner,
                  eosio::name ppa,
-                 eosio::name harvest_id,
+                 eosio::name harvest,
+                 eosio::asset quantity,
                  std::string report_hash);
 
     /**
@@ -262,12 +269,26 @@ public:
                      std::string subcategory,
                      float value);
 
+    /**
+     * Setup action, must be the called before `create`, `transfer`, `plant` and `issue`
+     * 
+     * * natus_symbol: only used when first calling this function, sets the system token
+     * * version: always updates the version with the given value
+     */
+    ACTION setconfig(eosio::symbol natus_symbol, std::string version);
+
     // TODO: Remove this development only action
     ACTION clean(std::string t);
+
+    // Contract configuration singleton
+    using configs_type = eosio::singleton<eosio::name{"config"}, config>;
+    configs_type configs_singleton;
 
     typedef eosio::multi_index<eosio::name{"units"}, units> units_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
     typedef eosio::multi_index<eosio::name{"harvest"}, harvest> harvest_table;
     typedef eosio::multi_index<eosio::name{"ppa"}, ppa> ppa_table;
-    typedef eosio::singleton<eosio::name{"stats"}> stats;
+
+private:
+    void _checkconfig();
 };

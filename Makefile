@@ -2,10 +2,12 @@
 
 src = $(wildcard *.cpp)
 obj = $(src:.cpp=.wasm)
+version = v1.0
+commithash = $(shell git log -1 --pretty=format:"%h")
+
 url = https://staging.cambiatus.io
 contract = natusunitdev
 authorization = $(contract)@active
-
 ppa1 =	natusppadev1
 
 natus.wasm: $(src)
@@ -17,6 +19,7 @@ clean:
 deploy: 
 	make
 	cleos -u $(url) set contract $(contract) ../natus --use-old-rpc
+	cleos -u $(url) push action $(contract) setconfig '["0,NSTU", "$(version)-$(commithash)"]' -p $(authorization)
 
 erase:
 	cleos -u $(url) push action $(contract) clean '["ppa"]' -p $(authorization)
@@ -26,8 +29,8 @@ erase:
 fill:
 	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Orion", "atlanticforest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Atlas", "amazonrainforest", "-88.378172,9.416413", "brazil", "B"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upserthrvst '[0, 2021, "2021.1"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upserthrvst '[0, 2022, "2022.1"]' -p $(authorization)
+	# cleos -u $(url) push action $(contract) sow '[0, 2021, "2021.1"]' -p $(authorization)
+	# cleos -u $(url) push action $(contract) sow '[0, 2022, "2022.1"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "biodiversity", "vegetation", 100.8]' -p $(authorization)
 	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "water", "spring", 3.0]' -p $(authorization)
 	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "water", "course", 15.0]' -p $(authorization)
