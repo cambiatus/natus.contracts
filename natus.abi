@@ -26,12 +26,20 @@
                     "type": "string"
                 },
                 {
+                    "name": "total_issued_supply",
+                    "type": "asset"
+                },
+                {
                     "name": "last_serial_number",
                     "type": "uint64"
                 },
                 {
-                    "name": "total_issued_supply",
-                    "type": "asset"
+                    "name": "last_ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_ecoservice_id",
+                    "type": "uint64"
                 }
             ]
         },
@@ -48,8 +56,8 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest_id",
-                    "type": "uint64"
+                    "name": "harvest",
+                    "type": "name"
                 },
                 {
                     "name": "category",
@@ -66,7 +74,7 @@
             ]
         },
         {
-            "name": "harvest",
+            "name": "harvests",
             "base": "",
             "fields": [
                 {
@@ -152,7 +160,7 @@
             ]
         },
         {
-            "name": "ppa",
+            "name": "ppas",
             "base": "",
             "fields": [
                 {
@@ -344,8 +352,8 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest_id",
-                    "type": "uint64"
+                    "name": "harvest",
+                    "type": "name"
                 },
                 {
                     "name": "category",
@@ -420,15 +428,15 @@
             "key_types": []
         },
         {
-            "name": "harvest",
-            "type": "harvest",
+            "name": "harvests",
+            "type": "harvests",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
-            "name": "ppa",
-            "type": "ppa",
+            "name": "ppas",
+            "type": "ppas",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

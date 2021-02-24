@@ -25,6 +25,7 @@ erase:
 	cleos -u $(url) push action $(contract) clean '["ppa"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) clean '["harvest"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) clean '["ecoservices"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) clean '["indexes"]' -p $(authorization)
 
 fill:
 	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Orion", "atlanticforest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)

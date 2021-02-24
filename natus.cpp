@@ -1,34 +1,13 @@
 #include "natus.hpp"
 
-std::vector<std::string> split(std::string str, std::string delim)
-{
-    std::vector<std::string> result;
-    while (str.size())
-    {
-        int index = str.find(delim);
-        if (index != std::string::npos)
-        {
-            result.push_back(str.substr(0, index));
-            str = str.substr(index + delim.size());
-            if (str.size() == 0)
-                result.push_back(str);
-        }
-        else
-        {
-            result.push_back(str);
-            str = "";
-        }
-    }
-    return result;
-}
-
 void natus::setconfig(eosio::symbol natus_symbol, std::string version)
 {
     require_auth(_self);
 
     eosio::check(natus_symbol.is_valid(), "provided symbol is not valid");
 
-    auto configs = configs_singleton.get_or_create(_self, config{natus_symbol, version, 0, eosio::asset(0, natus_symbol)});
+    auto default_config = config{natus_symbol, version, eosio::asset(0, natus_symbol), 0, 0, 0};
+    auto configs = configs_singleton.get_or_create(_self, default_config);
 
     configs.version = version;
     configs_singleton.set(configs, _self);
@@ -193,8 +172,12 @@ void natus::upsertppa(std::uint64_t id,
     }
 };
 
-void natus::upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harvest_id,
-                      std::string category, std::string subcategory, float value)
+void natus::upsertsrv(std::uint64_t id,
+                      std::uint64_t ppa_id,
+                      eosio::name harvest,
+                      std::string category,
+                      std::string subcategory,
+                      float value)
 {
     require_auth(_self);
 
@@ -204,9 +187,9 @@ void natus::upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harv
     eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
 
     // Validate Harvest
-    harvest_table harvest(_self, _self.value);
-    auto itr_harvest = harvest.find(harvest_id);
-    eosio::check(itr_harvest != harvest.end(), "cant find harvest with given harvest_id");
+    harvest_table harvests(_self, _self.value);
+    auto itr_harvest = harvests.find(harvest.value);
+    eosio::check(itr_harvest != harvests.end(), "cant find harvest with given harvest_id");
 
     // Validate Category
     bool is_category_valid = category == "water" || category == "biodiversity" || category == "carbon";
@@ -234,7 +217,7 @@ void natus::upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harv
         ecoservices.emplace(_self, [&](auto &e) {
             e.id = ecoservices.available_primary_key() == 0 ? 1 : ecoservices.available_primary_key();
             e.ppa_id = ppa_id;
-            e.harvest_id = harvest_id;
+            e.harvest = harvest;
             e.category = category;
             e.subcategory = subcategory;
             e.value = value;
@@ -246,7 +229,7 @@ void natus::upsertsrv(std::uint64_t id, std::uint64_t ppa_id, std::uint64_t harv
         eosio::check(itr != ecoservices.end(), "cannot find ecoservice with given ID");
         ecoservices.modify(itr, _self, [&](auto &e) {
             e.ppa_id = ppa_id;
-            e.harvest_id = harvest_id;
+            e.harvest = harvest;
             e.category = category;
             e.subcategory = subcategory;
             e.value = value;
@@ -258,7 +241,13 @@ void natus::clean(std::string t)
 {
     require_auth(_self);
 
-    eosio::check(t == "units" || t == "ecoservices" || t == "harvest" || t == "ppa", "invalid value");
+    eosio::check(t == "units" ||
+                     t == "ecoservices" ||
+                     t == "harvest" ||
+                     t == "ppa" ||
+                     t == "config" ||
+                     t == "indexes",
+                 "invalid value");
 
     if (t == "units")
     {
@@ -295,4 +284,52 @@ void natus::clean(std::string t)
             itr = ppa.erase(itr);
         }
     }
+
+    if (t == "config")
+    {
+        configs_singleton.remove();
+    }
+
+    if (t == "indexes")
+    {
+        _checkconfig();
+
+        auto config = configs_singleton.get();
+
+        config.last_serial_number = 0;
+        config.last_ppa_id = 0;
+        config.last_ecoservice_id = 0;
+
+        configs_singleton.set(config, _self);
+    }
+}
+
+// Private
+
+void natus::_checkconfig()
+{
+
+    eosio::check(configs_singleton.exists(), "No configuration found, please setup the contract");
+}
+
+std::vector<std::string> natus::split(std::string str, std::string delim)
+{
+    std::vector<std::string> result;
+    while (str.size())
+    {
+        int index = str.find(delim);
+        if (index != std::string::npos)
+        {
+            result.push_back(str.substr(0, index));
+            str = str.substr(index + delim.size());
+            if (str.size() == 0)
+                result.push_back(str);
+        }
+        else
+        {
+            result.push_back(str);
+            str = "";
+        }
+    }
+    return result;
 }

@@ -23,15 +23,21 @@ public:
      * 
      * * natus_symbol: Natus units symbol
      * * version: Current version of the contract
-     * * last_serial_number: system's last used serial number
      * * total_issued_supply: system wide issued Natus Units
+     * * last_serial_number: system's last used serial number
+     * * last_ppa_id: system's last used ppa_id
+     * * last_ecoservice_id: system's last used ecoservice_id
      */
     TABLE config
     {
         eosio::symbol natus_symbol;       // Symbol used to represent Natus Units
         std::string version;              // Current version for the contract
-        std::uint64_t last_serial_number; // Last used serial number
         eosio::asset total_issued_supply; // Total supply of Natus Unit issued, counts planted ones
+
+        // Custom indexing
+        std::uint64_t last_serial_number; // Last used serial number
+        std::uint64_t last_ppa_id;        // Last used ppa_id
+        std::uint64_t last_ecoservice_id; // Last used ecoservice_id
     };
 
     /**
@@ -85,7 +91,7 @@ public:
      * * base_uri: base URI for storing the Units certificates
      * * created_at: creation date for the harvest
      */
-    TABLE harvest
+    TABLE harvests
     {
         // Scope is _self
         eosio::name name;                       // Eg.: "2021.1", "2021.2"
@@ -101,7 +107,7 @@ public:
 
         std::uint64_t primary_key() const { return name.value; }
 
-        EOSLIB_SERIALIZE(harvest, (name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(available_window)(base_uri)(created_at));
+        EOSLIB_SERIALIZE(harvests, (name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(available_window)(base_uri)(created_at));
     };
 
     /**
@@ -116,14 +122,14 @@ public:
     {
         std::uint64_t id;
         std::uint64_t ppa_id;
-        std::uint64_t harvest_id;
+        eosio::name harvest;
         std::string category;
         std::string subcategory;
         float value;
 
         std::uint64_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(harvest_id)(category)(subcategory)(value));
+        EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(harvest)(category)(subcategory)(value));
     };
 
     /**
@@ -134,7 +140,7 @@ public:
      * 
      * PPAs can be updated to change its name, owner and ranking
     */
-    TABLE ppa
+    TABLE ppas
     {
         std::uint64_t id;
         eosio::name owner;
@@ -146,7 +152,7 @@ public:
 
         std::uint64_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(ppa, (id)(owner)(name)(biome)(location)(country)(ranking));
+        EOSLIB_SERIALIZE(ppas, (id)(owner)(name)(biome)(location)(country)(ranking));
     };
 
     /**
@@ -264,7 +270,7 @@ public:
      */
     ACTION upsertsrv(std::uint64_t id,
                      std::uint64_t ppa_id,
-                     std::uint64_t harvest_id,
+                     eosio::name harvest,
                      std::string category,
                      std::string subcategory,
                      float value);
@@ -286,9 +292,10 @@ public:
 
     typedef eosio::multi_index<eosio::name{"units"}, units> units_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
-    typedef eosio::multi_index<eosio::name{"harvest"}, harvest> harvest_table;
-    typedef eosio::multi_index<eosio::name{"ppa"}, ppa> ppa_table;
+    typedef eosio::multi_index<eosio::name{"harvests"}, harvests> harvest_table;
+    typedef eosio::multi_index<eosio::name{"ppas"}, ppas> ppa_table;
 
 private:
     void _checkconfig();
+    std::vector<std::string> split(std::string str, std::string delim);
 };
