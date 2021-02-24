@@ -116,7 +116,7 @@ public:
      * 
      * Available `category`s: `water`, `carbon` and `biodiversity`
      * Available `subcategory`s: `course`, `spring`, `stock`, `vegetation`, `species`, `hotspot`
-     * Value is a float, can be interpreted as tons, numbers, m2, etc
+     * Value is a double, can be interpreted as tons, numbers, m2, etc
      */
     TABLE ecoservices
     {
@@ -125,7 +125,7 @@ public:
         eosio::name harvest;
         std::string category;
         std::string subcategory;
-        float value;
+        double value;
 
         std::uint64_t primary_key() const { return id; }
 
@@ -260,7 +260,7 @@ public:
      * *    When category is `water`: `course` or `spring`.
      * *    When category is `carbon`: `stock`. 
      * *    When category is `biodiversity`: `vegetation`, `species`, `hotspot`
-     * * value: float value corresponding to the service provided
+     * * value: double value corresponding to the service provided
      * 
      * ID   PPA_ID      Harvest     Category     Subcategory     Value
      * 1    gigante1    2020.1      water        spring          10
@@ -273,7 +273,7 @@ public:
                      eosio::name harvest,
                      std::string category,
                      std::string subcategory,
-                     float value);
+                     double value);
 
     /**
      * Setup action, must be the called before `create`, `transfer`, `plant` and `issue`
@@ -298,4 +298,5 @@ public:
 private:
     void _checkconfig();
     std::vector<std::string> split(std::string str, std::string delim);
+    uint64_t get_available_id(std::string table);
 };

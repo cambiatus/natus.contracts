@@ -151,7 +151,7 @@ void natus::upsertppa(std::uint64_t id,
     if (id == 0)
     {
         ppa.emplace(_self, [&](auto &p) {
-            p.id = ppa.available_primary_key() == 0 ? 1 : ppa.available_primary_key();
+            p.id = get_available_id("ppas");
             p.name = name;
             p.biome = biome;
             p.location = location;
@@ -177,7 +177,7 @@ void natus::upsertsrv(std::uint64_t id,
                       eosio::name harvest,
                       std::string category,
                       std::string subcategory,
-                      float value)
+                      double value)
 {
     require_auth(_self);
 
@@ -215,7 +215,7 @@ void natus::upsertsrv(std::uint64_t id,
     if (id == 0)
     {
         ecoservices.emplace(_self, [&](auto &e) {
-            e.id = ecoservices.available_primary_key() == 0 ? 1 : ecoservices.available_primary_key();
+            e.id = get_available_id("ecoservices");
             e.ppa_id = ppa_id;
             e.harvest = harvest;
             e.category = category;
@@ -332,4 +332,42 @@ std::vector<std::string> natus::split(std::string str, std::string delim)
         }
     }
     return result;
+}
+
+// Get available key
+uint64_t natus::get_available_id(std::string table)
+{
+    eosio::check(table == "serial" || table == "ppas" || table == "ecoservices", "Table index not available");
+
+    _checkconfig();
+    auto config = configs_singleton.get();
+
+    std::uint64_t new_id = 1;
+
+    if (table == "serial")
+    {
+        new_id = config.last_serial_number + 1;
+        config.last_serial_number = new_id;
+        configs_singleton.set(config, _self);
+
+        return new_id;
+    }
+    else if (table == "ppas")
+    {
+        new_id = config.last_ppa_id + 1;
+        config.last_ppa_id = new_id;
+        configs_singleton.set(config, _self);
+
+        return new_id;
+    }
+    else if (table == "ecoservices")
+    {
+        new_id = config.last_ecoservice_id + 1;
+        config.last_ecoservice_id = new_id;
+        configs_singleton.set(config, _self);
+
+        return new_id;
+    }
+
+    return new_id;
 }

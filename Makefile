@@ -28,12 +28,18 @@ erase:
 	cleos -u $(url) push action $(contract) clean '["indexes"]' -p $(authorization)
 
 fill:
+	# PPAs
 	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Orion", "atlanticforest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Atlas", "amazonrainforest", "-88.378172,9.416413", "brazil", "B"]' -p $(authorization)
-	# cleos -u $(url) push action $(contract) sow '[0, 2021, "2021.1"]' -p $(authorization)
-	# cleos -u $(url) push action $(contract) sow '[0, 2022, "2022.1"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "biodiversity", "vegetation", 100.8]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "water", "spring", 3.0]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "water", "course", 15.0]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "biodiversity", "species", 5.0]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, 1, "carbon", "stock", 18054054.88]' -p $(authorization)
+
+	# Harvests
+	cleos -u $(url) push action $(contract) sow '["2k21.1", "natusppadev1", 0, 0, "1000 NSTU", 364, "s3.aws.com/bucket/2k21.1/"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) sow '["2k21.2", "natusppadev1", 0, 1, "200 NSTU", 30, "s3.aws.com/bucket/2k21.2/"]' -p $(authorization)
+
+
+	# Ecoservices
+	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "biodiversity", "vegetation", 100.8]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "water", "spring", 3.0]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "water", "course", 15.0]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "biodiversity", "species", 5.0]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "carbon", "stock", 18054054.88]' -p $(authorization)
