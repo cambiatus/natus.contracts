@@ -120,6 +120,7 @@ public:
      */
     TABLE ecoservices
     {
+        // Scope is _self
         std::uint64_t id;
         std::uint64_t ppa_id;
         eosio::name harvest;
@@ -142,6 +143,7 @@ public:
     */
     TABLE ppas
     {
+        // Scope is _self
         std::uint64_t id;
         eosio::name owner;
         std::string name;
@@ -188,9 +190,10 @@ public:
      * * report_hash: hash of the report corresponding to this PPA's Natus Units
      */
     ACTION issue(eosio::name to,
-                 eosio::name ppa,
+                 std::uint64_t ppa_id,
                  eosio::name harvest,
                  eosio::asset quantity,
+                 std::string issue,
                  std::string report_hash);
 
     /**
