@@ -84,15 +84,15 @@ public:
     TABLE accounts
     {
         // Scope is owner
-        std::uint64_t id; // ID, not really useful
+        uint128_t ppa_harvest_id;
 
         eosio::asset balance; // Amount of units
         std::uint64_t ppa_id; // PPA that created the Unit
         eosio::name harvest;  // Harvest where those amounted units comes from
 
-        std::uint64_t primary_key() const { return id; }
+        uint128_t primary_key() const { return ppa_harvest_id; }
 
-        EOSLIB_SERIALIZE(accounts, (balance)(ppa_id)(harvest));
+        EOSLIB_SERIALIZE(accounts, (ppa_harvest_id)(balance)(ppa_id)(harvest));
     };
 
     /**
@@ -213,8 +213,8 @@ public:
                  std::uint64_t ppa_id,
                  eosio::name harvest,
                  eosio::asset quantity,
-                 std::string issue,
-                 std::string report_hash);
+                 std::string report_hash,
+                 std::string memo);
 
     /**
      * Plant a Natus Unit
@@ -307,7 +307,7 @@ public:
     ACTION setconfig(eosio::symbol natus_symbol, std::string version);
 
     // TODO: Remove this development only action
-    ACTION clean(std::string t);
+    ACTION clean(std::string t, eosio::name scope);
 
     // Contract configuration singleton
     using configs_type = eosio::singleton<eosio::name{"config"}, config>;
@@ -321,7 +321,6 @@ public:
 
 private:
     void _checkconfig();
-    std::vector<std::string> split(std::string str, std::string delim);
     eosio::time_point_sec _now();
     uint64_t get_available_id(std::string table);
 
@@ -329,6 +328,6 @@ private:
     void _mint(eosio::name to, eosio::name issuer, eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
 
     // Add / Subtract balances on the Accounts table
-    void _add_balance(eosio::name owner, eosio::asset quantity);
-    void _sub_balance(eosio::name owner, eosio::asset quantity);
+    void _add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest);
+    void _sub_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest);
 };

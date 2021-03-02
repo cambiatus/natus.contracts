@@ -8,8 +8,8 @@
             "base": "",
             "fields": [
                 {
-                    "name": "id",
-                    "type": "uint64"
+                    "name": "ppa_harvest_id",
+                    "type": "uint128"
                 },
                 {
                     "name": "balance",
@@ -32,6 +32,10 @@
                 {
                     "name": "t",
                     "type": "string"
+                },
+                {
+                    "name": "scope",
+                    "type": "name"
                 }
             ]
         },
@@ -162,11 +166,11 @@
                     "type": "asset"
                 },
                 {
-                    "name": "issue",
+                    "name": "report_hash",
                     "type": "string"
                 },
                 {
-                    "name": "report_hash",
+                    "name": "memo",
                     "type": "string"
                 }
             ]
