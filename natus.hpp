@@ -58,21 +58,41 @@ public:
      */
     TABLE units
     {
-        // Scope is harvest.value()
-        std::uint64_t id;
-        eosio::name owner;                      // Current Owner
-        eosio::name ppa_origin;                 // PPA that created the Unit
-        eosio::name harvest;                    // Harvest where it comes from
+        // Scope is self
         std::uint64_t serial_number;            // Serial number for external reference
+        eosio::name owner;                      // Current Owner
+        eosio::name harvest;                    // Harvest where it comes from
+        std::uint64_t ppa_id;                   // PPA that created the Unit
         std::optional<std::string> report_hash; // hash for the report, should be used together with harvest.base_uri
         eosio::time_point_sec planted_at;       // Date of planting, if its zero, it still havent been planted yet
         eosio::time_point_sec issued_at;        // Date of issuing
         eosio::time_point_sec updated_at;       // Last update date (transfer and plant change this value)
 
-        std::uint64_t primary_key() const { return id; }
+        std::uint64_t primary_key() const { return serial_number; }
         std::uint64_t get_owner() const { return owner.value; }
 
-        EOSLIB_SERIALIZE(units, (id)(owner)(ppa_origin)(harvest)(serial_number)(report_hash)(planted_at)(issued_at)(updated_at));
+        EOSLIB_SERIALIZE(units, (serial_number)(owner)(harvest)(ppa_id)(report_hash)(planted_at)(issued_at)(updated_at));
+    };
+
+    /**
+     * Table that holds an account balance
+     * Natus Units always are created based on a single PPA resourses as a way to represent its ecosystem services.
+     * For that reason we use both Harvest and PPA to indentify the origin of the 
+     * 
+     * So a single user can have multiple Natus Units balance, each one representing the portion from each PPA/Harvest
+    */
+    TABLE accounts
+    {
+        // Scope is owner
+        std::uint64_t id; // ID, not really useful
+
+        eosio::asset balance; // Amount of units
+        std::uint64_t ppa_id; // PPA that created the Unit
+        eosio::name harvest;  // Harvest where those amounted units comes from
+
+        std::uint64_t primary_key() const { return id; }
+
+        EOSLIB_SERIALIZE(accounts, (balance)(ppa_id)(harvest));
     };
 
     /**
@@ -293,6 +313,7 @@ public:
     using configs_type = eosio::singleton<eosio::name{"config"}, config>;
     configs_type configs_singleton;
 
+    typedef eosio::multi_index<eosio::name{"accounts"}, accounts> accounts_table;
     typedef eosio::multi_index<eosio::name{"units"}, units> units_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
     typedef eosio::multi_index<eosio::name{"harvests"}, harvests> harvest_table;
@@ -301,5 +322,13 @@ public:
 private:
     void _checkconfig();
     std::vector<std::string> split(std::string str, std::string delim);
+    eosio::time_point_sec _now();
     uint64_t get_available_id(std::string table);
+
+    // Saves new entries to the Units table
+    void _mint(eosio::name to, eosio::name issuer, eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
+
+    // Add / Subtract balances on the Accounts table
+    void _add_balance(eosio::name owner, eosio::asset quantity);
+    void _sub_balance(eosio::name owner, eosio::asset quantity);
 };

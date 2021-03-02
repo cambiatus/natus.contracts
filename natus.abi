@@ -4,6 +4,28 @@
     "types": [],
     "structs": [
         {
+            "name": "accounts",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "balance",
+                    "type": "asset"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "harvest",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "clean",
             "base": "",
             "fields": [
@@ -128,8 +150,8 @@
                     "type": "name"
                 },
                 {
-                    "name": "ppa",
-                    "type": "name"
+                    "name": "ppa_id",
+                    "type": "uint64"
                 },
                 {
                     "name": "harvest",
@@ -138,6 +160,10 @@
                 {
                     "name": "quantity",
                     "type": "asset"
+                },
+                {
+                    "name": "issue",
+                    "type": "string"
                 },
                 {
                     "name": "report_hash",
@@ -268,7 +294,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "id",
+                    "name": "serial_number",
                     "type": "uint64"
                 },
                 {
@@ -276,15 +302,11 @@
                     "type": "name"
                 },
                 {
-                    "name": "ppa_origin",
-                    "type": "name"
-                },
-                {
                     "name": "harvest",
                     "type": "name"
                 },
                 {
-                    "name": "serial_number",
+                    "name": "ppa_id",
                     "type": "uint64"
                 },
                 {
@@ -413,6 +435,13 @@
         }
     ],
     "tables": [
+        {
+            "name": "accounts",
+            "type": "accounts",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
         {
             "name": "config",
             "type": "config",

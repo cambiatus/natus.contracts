@@ -82,7 +82,6 @@ void natus::issue(eosio::name to,
                   std::string memo,
                   std::string report_hash)
 {
-    require_auth(_self);
     eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
     eosio::check(is_account(to), "to account doesn't exist");
 
@@ -91,29 +90,38 @@ void natus::issue(eosio::name to,
     // Validate quantity
     eosio::check(quantity.is_valid(), "invalid quantity");
     eosio::check(quantity.amount > 0, "quantity must be positive");
-    eosio::check(quantity.symbol == config.natus_symbol, "we only accept " + config.natus_symbol.to_string() + " tokens");
+    eosio::check(quantity.symbol == config.natus_symbol, "we only accept " + config.natus_symbol.code().to_string() + " tokens");
 
     ppa_table ppa(_self, _self.value);
     auto itr_ppa = ppa.find(ppa_id);
     eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
 
     // Validate Harvest
-    harvest_table harvest(_self, _self.value);
-    const auto &harvest = harvest.get(harvest.value, "cant find harvest with given harvest_id");
+    harvest_table h(_self, _self.value);
+    const auto &found_harvest = h.get(harvest.value, "cant find harvest with given harvest_id");
+
+    eosio::require_auth(found_harvest.issuer);
 
     // If it is configured to have a time window
-    if (config.available_window != eosio::time_point_sec(0))
+    if (found_harvest.available_window != eosio::time_point_sec(0))
     {
-        auto now = eosio::time_point_sec(eosio::current_time_point());
-        eosio::check(now <= harvest.available_window, "This harvest is closed, cannot issue more");
+        eosio::check(_now() <= found_harvest.available_window, "This harvest is closed, cannot issue more");
     }
 
-    auto available_supply = harvest.max_supply - harvest.issued_supply;
-    harvest.eosio::check(quantity.amount <= available_supply, "Cannot issue more than max supply");
+    auto available_supply = found_harvest.max_supply - found_harvest.issued_supply;
+    eosio::check(quantity.amount <= available_supply.amount, "Cannot issue more than max supply");
 
-    // units_table units(_self, _self.value));
+    eosio::asset issued_supply = config.total_issued_supply;
 
-    // TODO: Make sure to use last_serial_number from stats
+    for (std::uint64_t i = 1; i <= quantity.amount; i++)
+    {
+        _mint(to, found_harvest.issuer, found_harvest.name, ppa_id, report_hash);
+        issued_supply += eosio::asset(1, issued_supply.symbol);
+    }
+
+    // Add categorized balance
+    // _add_balance(to, quantity);
+
     // TODO: change harvest supplies
 };
 
@@ -352,6 +360,11 @@ std::vector<std::string> natus::split(std::string str, std::string delim)
     return result;
 }
 
+eosio::time_point_sec natus::_now()
+{
+    return eosio::time_point_sec(eosio::current_time_point());
+}
+
 // Get available key
 uint64_t natus::get_available_id(std::string table)
 {
@@ -389,3 +402,30 @@ uint64_t natus::get_available_id(std::string table)
 
     return new_id;
 }
+
+void natus::_mint(eosio::name to, eosio::name issuer, eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
+{
+    // generates new units
+    units_table units(_self, _self.value);
+    units.emplace(issuer, [&](auto &u) {
+        u.serial_number = get_available_id("serial");
+        u.owner = to;
+        u.harvest = harvest;
+        u.ppa_id = ppa_id;
+        u.report_hash = report_hash;
+        u.planted_at = eosio::time_point_sec(0);
+        u.issued_at = _now();
+        u.updated_at = _now();
+    });
+}
+
+void natus::_add_balance(eosio::name owner, eosio::asset quantity)
+{
+    // Adds to balance
+    accounts_table from_account(_self, owner.value);
+
+    // const auto &account = from_account.get()
+    // How would I know which tokens i must take from? harvest?
+}
+
+void natus::_sub_balance(eosio::name owner, eosio::asset quantity) {}
