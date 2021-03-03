@@ -112,25 +112,22 @@ void natus::issue(eosio::name to,
     auto available_supply = found_harvest.max_supply - found_harvest.issued_supply;
     eosio::check(quantity.amount <= available_supply.amount, "Cannot issue more than max supply");
 
-    eosio::asset issued_supply = config.total_issued_supply;
-
     for (std::uint64_t i = 1; i <= quantity.amount; i++)
     {
         _mint(to, found_harvest.issuer, found_harvest.name, ppa_id, report_hash);
-        issued_supply += eosio::asset(1, issued_supply.symbol);
     }
 
-    // TODO: Add balance
     _add_balance(to, quantity, ppa_id, harvest);
 
     // Update harvest issued_supply
     h.modify(found_harvest, _self, [&](auto &ha) {
-        ha.current_supply += issued_supply;
-        ha.issued_supply += issued_supply;
+        ha.current_supply += quantity;
+        ha.issued_supply += quantity;
     });
 
     // Update System's total supply
-    config.total_issued_supply += issued_supply;
+    config = configs_singleton.get();
+    config.total_issued_supply += quantity;
     configs_singleton.set(config, _self);
 };
 
@@ -292,6 +289,10 @@ void natus::clean(std::string t, eosio::name scope)
         {
             itr = units.erase(itr);
         }
+
+        auto config = configs_singleton.get();
+        config.total_issued_supply = eosio::asset(0, config.total_issued_supply.symbol);
+        configs_singleton.set(config, _self);
     }
 
     if (t == "ecoservices")
@@ -420,7 +421,7 @@ void natus::_add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t
 {
     auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
     accounts_table accounts(_self, owner.value);
-    const auto &account = accounts.find(ppa_harvest_id);
+    auto account = accounts.find(ppa_harvest_id);
 
     // Create new balance if there isn't one yet
     if (account == accounts.end())

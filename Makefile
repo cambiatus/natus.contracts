@@ -6,7 +6,8 @@ version = v1.0
 commithash = $(shell git log -1 --pretty=format:"%h")
 
 url = https://staging.cambiatus.io
-contract = natusunitdev
+# contract = natusunitdev
+contract = natusunitd3v
 authorization = $(contract)@active
 ppa1 =	natusppadev1
 issuer = natusfoundat
@@ -29,6 +30,8 @@ erase:
 	cleos -u $(url) push action $(contract) clean '["ppa", ""]' -p $(authorization)
 	cleos -u $(url) push action $(contract) clean '["indexes", ""]' -p $(authorization)
 	cleos -u $(url) push action $(contract) clean '["accounts", "lucca"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) clean '["accounts", "karla"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) clean '["accounts", "$(issuer)"]' -p $(authorization)
 
 fill:
 	# PPAs
@@ -38,6 +41,7 @@ fill:
 	# Harvests
 	cleos -u $(url) push action $(contract) sow '["2k21.1", "$(issuer)", 0, 0, "1000 NSTU", 364, "s3.aws.com/bucket/2k21.1/"]' -p $(authorization)
 	cleos -u $(url) push action $(contract) sow '["2k21.2", "$(issuer)", 0, 1, "200 NSTU", 30, "s3.aws.com/bucket/2k21.2/"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) sow '["large.1", "$(issuer)", 0, 0, "99000000 NSTU", 1, "s3.aws.com/bucket/2k21.1/"]' -p $(authorization)
 
 	# Ecoservices
 	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "biodiversity", "vegetation", 100.8]' -p $(authorization)
@@ -47,5 +51,12 @@ fill:
 	cleos -u $(url) push action $(contract) upsertsrv '[0, 1, "2k21.1", "carbon", "stock", 18054054.88]' -p $(authorization)
 
 issue: 
+	# Harvest 2k21.1
 	cleos -u $(url) push action $(contract) issue '["lucca", 1, "2k21.1", "10 NSTU", "somehash", "First time issuing Natus"]' -p $(issuer)
-	# cleos -u $(url) push action $(contract) issue '["karla", 1, "2k21.1", "10 NSTU", "somehash", "First time issuing Natus"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) issue '["karla", 1, "2k21.1", "3 NSTU", "somehash", "First time issuing Natus"]' -p $(issuer)
+
+	# Harvest 2k21.2
+	cleos -u $(url) push action $(contract) issue '["lucca", 1, "2k21.2", "77 NSTU", "somehash", "First time issuing Natus"]' -p $(issuer)
+
+	# Harvest large.1
+	cleos -u $(url) push action $(contract) issue '["$(issuer)", 1, "large.1", "100000 NSTU", "somehash", "First time issuing Natus"]' -p $(issuer)

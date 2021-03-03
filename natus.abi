@@ -9,7 +9,7 @@
             "fields": [
                 {
                     "name": "ppa_harvest_id",
-                    "type": "uint128"
+                    "type": "uint64"
                 },
                 {
                     "name": "balance",

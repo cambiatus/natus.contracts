@@ -84,13 +84,12 @@ public:
     TABLE accounts
     {
         // Scope is owner
-        uint128_t ppa_harvest_id;
+        std::uint64_t ppa_harvest_id; // Key calculated from merging ppa_id and harvest
+        eosio::asset balance;         // Amount of units
+        std::uint64_t ppa_id;         // PPA that created the Unit
+        eosio::name harvest;          // Harvest where those amounted units comes from
 
-        eosio::asset balance; // Amount of units
-        std::uint64_t ppa_id; // PPA that created the Unit
-        eosio::name harvest;  // Harvest where those amounted units comes from
-
-        uint128_t primary_key() const { return ppa_harvest_id; }
+        std::uint64_t primary_key() const { return ppa_harvest_id; }
 
         EOSLIB_SERIALIZE(accounts, (ppa_harvest_id)(balance)(ppa_id)(harvest));
     };
