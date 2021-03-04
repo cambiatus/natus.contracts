@@ -24,7 +24,6 @@ public:
      * * natus_symbol: Natus units symbol
      * * version: Current version of the contract
      * * total_issued_supply: system wide issued Natus Units
-     * * last_serial_number: system's last used serial number
      * * last_ppa_id: system's last used ppa_id
      * * last_ecoservice_id: system's last used ecoservice_id
      */
@@ -35,43 +34,19 @@ public:
         eosio::asset total_issued_supply; // Total supply of Natus Unit issued, counts planted ones
 
         // Custom indexing
-        std::uint64_t last_serial_number; // Last used serial number
         std::uint64_t last_ppa_id;        // Last used ppa_id
         std::uint64_t last_ecoservice_id; // Last used ecoservice_id
     };
 
-    /**
-     * Table that holds information about all Natus Units
-     * Natus Unit is a digital good that represents a basket of services provided by a given PPA (see links below) in a given period called `harvest`
-     * 
-     * Here is a general description of available fields on a Natus Unit:
-     * 
-     * * id: ID
-     * * owner: Current owner 
-     * * ppa_origin: PPA name where this unit come from
-     * * harvest: related harvest, used on the scope as well
-     * * serial_number: serialized ID, increments independetly of harvest
-     * * report_hash: Hash for the full report document, used to garantee authenticity of the document
-     * * planted_at: Date it was planted, its empty if it is still not planted
-     * * inserted_at: Date it was inserted/created
-     * * updated_at: Date it was updated
-     */
-    TABLE units
+    TABLE reports
     {
         // Scope is self
-        std::uint64_t serial_number;            // Serial number for external reference
-        eosio::name owner;                      // Current Owner
-        eosio::name harvest;                    // Harvest where it comes from
-        std::uint64_t ppa_id;                   // PPA that created the Unit
-        std::optional<std::string> report_hash; // hash for the report, should be used together with harvest.base_uri
-        eosio::time_point_sec planted_at;       // Date of planting, if its zero, it still havent been planted yet
-        eosio::time_point_sec issued_at;        // Date of issuing
-        eosio::time_point_sec updated_at;       // Last update date (transfer and plant change this value)
+        std::uint64_t ppa_harvest_id;
+        eosio::name harvest;
+        std::uint64_t ppa_id;
+        std::optional<std::string> report_hash;
 
-        std::uint64_t primary_key() const { return serial_number; }
-        std::uint64_t get_owner() const { return owner.value; }
-
-        EOSLIB_SERIALIZE(units, (serial_number)(owner)(harvest)(ppa_id)(report_hash)(planted_at)(issued_at)(updated_at));
+        EOSLIB_SERIALIZE(reports(ppa_harvest_id)(harvest)(ppa_id)(report_hash));
     };
 
     /**
@@ -199,6 +174,16 @@ public:
                eosio::asset max_supply,
                std::uint32_t issue_days,
                std::string base_uri);
+
+    /**
+     * Saves a report for a given Harvest and PPA. Must be unique
+     * 
+     * Validations:
+     * * harvest: must exist, combination with ppa must be unique
+     * * ppa_id: id for the ppa, must exist, combination with harvest must be unique
+     * * report_hash: hash for the report that attest for authenticity of the issued NSTU
+     */
+    ACTION addreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
 
     /**
      * Issue a new Natus Unit
