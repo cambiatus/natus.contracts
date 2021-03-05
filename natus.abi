@@ -26,6 +26,24 @@
             ]
         },
         {
+            "name": "addreport",
+            "base": "",
+            "fields": [
+                {
+                    "name": "harvest",
+                    "type": "name"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "report_hash",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "clean",
             "base": "",
             "fields": [
@@ -54,10 +72,6 @@
                 {
                     "name": "total_issued_supply",
                     "type": "asset"
-                },
-                {
-                    "name": "last_serial_number",
-                    "type": "uint64"
                 },
                 {
                     "name": "last_ppa_id",
@@ -224,6 +238,28 @@
             ]
         },
         {
+            "name": "reports",
+            "base": "",
+            "fields": [
+                {
+                    "name": "ppa_harvest_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "harvest",
+                    "type": "name"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "report_hash",
+                    "type": "string?"
+                }
+            ]
+        },
+        {
             "name": "setconfig",
             "base": "",
             "fields": [
@@ -284,50 +320,20 @@
                     "type": "name"
                 },
                 {
-                    "name": "unit_id",
+                    "name": "ppa_id",
                     "type": "uint64"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
-                }
-            ]
-        },
-        {
-            "name": "units",
-            "base": "",
-            "fields": [
-                {
-                    "name": "serial_number",
-                    "type": "uint64"
-                },
-                {
-                    "name": "owner",
-                    "type": "name"
                 },
                 {
                     "name": "harvest",
                     "type": "name"
                 },
                 {
-                    "name": "ppa_id",
-                    "type": "uint64"
+                    "name": "quantity",
+                    "type": "asset"
                 },
                 {
-                    "name": "report_hash",
-                    "type": "string?"
-                },
-                {
-                    "name": "planted_at",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "issued_at",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "updated_at",
-                    "type": "time_point_sec"
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },
@@ -397,6 +403,11 @@
         }
     ],
     "actions": [
+        {
+            "name": "addreport",
+            "type": "addreport",
+            "ricardian_contract": ""
+        },
         {
             "name": "clean",
             "type": "clean",
@@ -475,8 +486,8 @@
             "key_types": []
         },
         {
-            "name": "units",
-            "type": "units",
+            "name": "reports",
+            "type": "reports",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

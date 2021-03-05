@@ -46,7 +46,7 @@ public:
         std::uint64_t ppa_id;
         std::optional<std::string> report_hash;
 
-        EOSLIB_SERIALIZE(reports(ppa_harvest_id)(harvest)(ppa_id)(report_hash));
+        EOSLIB_SERIALIZE(reports, (ppa_harvest_id)(harvest)(ppa_id)(report_hash));
     };
 
     /**
@@ -222,7 +222,9 @@ public:
      */
     ACTION transfer(eosio::name from,
                     eosio::name to,
-                    std::uint64_t unit_id,
+                    std::uint64_t ppa_id,
+                    eosio::name harvest,
+                    eosio::asset quantity,
                     std::string memo);
 
     /**
@@ -298,7 +300,6 @@ public:
     configs_type configs_singleton;
 
     typedef eosio::multi_index<eosio::name{"accounts"}, accounts> accounts_table;
-    typedef eosio::multi_index<eosio::name{"units"}, units> units_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
     typedef eosio::multi_index<eosio::name{"harvests"}, harvests> harvest_table;
     typedef eosio::multi_index<eosio::name{"ppas"}, ppas> ppa_table;

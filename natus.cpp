@@ -7,7 +7,7 @@ void natus::setconfig(eosio::symbol natus_symbol, std::string version)
 
     eosio::check(natus_symbol.is_valid(), "provided symbol is not valid");
 
-    auto default_config = config{natus_symbol, version, eosio::asset(0, natus_symbol), 0, 0, 0};
+    auto default_config = config{natus_symbol, version, eosio::asset(0, natus_symbol), 0, 0};
     auto configs = configs_singleton.get_or_create(_self, default_config);
 
     configs.version = version;
@@ -76,6 +76,12 @@ void natus::sow(eosio::name name,
     }
 }
 
+void natus::addreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
+{
+    // TODO: Implement this
+    // TODO: maybe this can be an upsert
+}
+
 void natus::issue(eosio::name to,
                   std::uint64_t ppa_id,
                   eosio::name harvest,
@@ -112,11 +118,6 @@ void natus::issue(eosio::name to,
     auto available_supply = found_harvest.max_supply - found_harvest.issued_supply;
     eosio::check(quantity.amount <= available_supply.amount, "Cannot issue more than max supply");
 
-    for (std::uint64_t i = 1; i <= quantity.amount; i++)
-    {
-        _mint(to, found_harvest.issuer, found_harvest.name, ppa_id, report_hash);
-    }
-
     _add_balance(to, quantity, ppa_id, harvest);
 
     // Update harvest issued_supply
@@ -133,22 +134,33 @@ void natus::issue(eosio::name to,
 
 void natus::plant(std::uint64_t id, eosio::name owner){};
 
-void natus::transfer(eosio::name from, eosio::name to, std::uint64_t unit_id, std::string memo)
+void natus::transfer(eosio::name from,
+                     eosio::name to,
+                     std::uint64_t ppa_id,
+                     eosio::name harvest,
+                     eosio::asset quantity,
+                     std::string memo)
 {
-    // eosio::check(from != to, "cannot transfer to self");
-    // eosio::check(is_account(to), "destination account doesn't exists");
+    require_auth(from);
 
-    // require_auth(from);
+    eosio::check(from != to, "cannot transfer to self");
+    eosio::check(is_account(to), "destination account doesn't exists");
+    eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    // // Check if Natus Unit exists
-    // natus::units_table units(_self, _self.value);
-    // const auto &found_unit = units.get(unit_id, "can't find a Natus Unit with given unit_id");
+    // Validate Harvest, if its possible to transfer
+    harvest_table h(_self, _self.value);
+    const auto &found_harvest = h.get(harvest.value, "cant find harvest with given harvest_id");
+    eosio::check(found_harvest.transferable, "Harvest ended");
 
-    // units.modify(found_unit, _self, [&](auto &u) {
-    //     u.owner = to;
-    // });
+    // Check quantity
+    auto config = configs_singleton.get();
+    eosio::check(quantity.symbol == config.natus_symbol, "Symbol don't match the system's");
+    eosio::check(quantity.amount > 0, "amount must be positive");
+    eosio::check(quantity.symbol.precision() == 0, "precision must be 0");
+    eosio::check(quantity.is_valid(), "invalid quantity");
 
-    // // TODO: Update Natus to change owner
+    _sub_balance(from, quantity, ppa_id, harvest);
+    _add_balance(to, quantity, ppa_id, harvest);
 }
 
 void natus::upsertppa(std::uint64_t id,
@@ -273,27 +285,14 @@ void natus::clean(std::string t, eosio::name scope)
 {
     require_auth(_self);
 
-    eosio::check(t == "units" ||
-                     t == "ecoservices" ||
-                     t == "harvest" ||
-                     t == "ppa" ||
-                     t == "config" ||
-                     t == "indexes" ||
-                     t == "accounts",
-                 "invalid value");
-
-    if (t == "units")
-    {
-        natus::units_table units(_self, _self.value);
-        for (auto itr = units.begin(); itr != units.end();)
-        {
-            itr = units.erase(itr);
-        }
-
-        auto config = configs_singleton.get();
-        config.total_issued_supply = eosio::asset(0, config.total_issued_supply.symbol);
-        configs_singleton.set(config, _self);
-    }
+    eosio::check(
+        t == "ecoservices" ||
+            t == "harvest" ||
+            t == "ppa" ||
+            t == "config" ||
+            t == "indexes" ||
+            t == "accounts",
+        "invalid value");
 
     if (t == "ecoservices")
     {
@@ -333,7 +332,6 @@ void natus::clean(std::string t, eosio::name scope)
 
         auto config = configs_singleton.get();
 
-        config.last_serial_number = 0;
         config.last_ppa_id = 0;
         config.last_ecoservice_id = 0;
 
@@ -366,22 +364,14 @@ eosio::time_point_sec natus::_now()
 // Get available key
 uint64_t natus::get_available_id(std::string table)
 {
-    eosio::check(table == "serial" || table == "ppas" || table == "ecoservices", "Table index not available");
+    eosio::check(table == "ppas" || table == "ecoservices", "Table index not available");
 
     _checkconfig();
     auto config = configs_singleton.get();
 
     std::uint64_t new_id = 1;
 
-    if (table == "serial")
-    {
-        new_id = config.last_serial_number + 1;
-        config.last_serial_number = new_id;
-        configs_singleton.set(config, _self);
-
-        return new_id;
-    }
-    else if (table == "ppas")
+    if (table == "ppas")
     {
         new_id = config.last_ppa_id + 1;
         config.last_ppa_id = new_id;
@@ -401,23 +391,10 @@ uint64_t natus::get_available_id(std::string table)
     return new_id;
 }
 
-void natus::_mint(eosio::name to, eosio::name issuer, eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
-{
-    // generates new units
-    units_table units(_self, _self.value);
-    units.emplace(issuer, [&](auto &u) {
-        u.serial_number = get_available_id("serial");
-        u.owner = to;
-        u.harvest = harvest;
-        u.ppa_id = ppa_id;
-        u.report_hash = report_hash;
-        u.planted_at = eosio::time_point_sec(0);
-        u.issued_at = _now();
-        u.updated_at = _now();
-    });
-}
-
-void natus::_add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest)
+void natus::_add_balance(eosio::name owner,
+                         eosio::asset quantity,
+                         std::uint64_t ppa_id,
+                         eosio::name harvest)
 {
     auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
     accounts_table accounts(_self, owner.value);
@@ -441,7 +418,10 @@ void natus::_add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t
     }
 }
 
-void natus::_sub_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest)
+void natus::_sub_balance(eosio::name owner,
+                         eosio::asset quantity,
+                         std::uint64_t ppa_id,
+                         eosio::name harvest)
 {
     auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
     accounts_table accounts(_self, owner.value);
