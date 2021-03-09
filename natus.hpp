@@ -38,15 +38,20 @@ public:
         std::uint64_t last_ecoservice_id; // Last used ecoservice_id
     };
 
+    /**
+     * Store the reports for a harvest and ppa pair. It can only hold one harvest/ppa per report
+    */
     TABLE reports
     {
         // Scope is self
-        std::uint64_t ppa_harvest_id;
+        std::uint64_t id;
         eosio::name harvest;
         std::uint64_t ppa_id;
         std::optional<std::string> report_hash;
 
-        EOSLIB_SERIALIZE(reports, (ppa_harvest_id)(harvest)(ppa_id)(report_hash));
+        std::uint64_t primary_key() const { return id; }
+
+        EOSLIB_SERIALIZE(reports, (id)(harvest)(ppa_id)(report_hash));
     };
 
     /**
@@ -88,7 +93,7 @@ public:
     TABLE harvests
     {
         // Scope is _self
-        eosio::name name;                       // Eg.: "2021.1", "2021.2"
+        eosio::name name;                       // Eg.: "2k21.1", "2k21.2"
         eosio::name issuer;                     // Issuer account
         bool sellable;                          // Informs if its sellable
         bool transferable;                      // Informs if its transferable
@@ -183,32 +188,38 @@ public:
      * * ppa_id: id for the ppa, must exist, combination with harvest must be unique
      * * report_hash: hash for the report that attest for authenticity of the issued NSTU
      */
-    ACTION addreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
+    ACTION upsertreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
 
     /**
      * Issue a new Natus Unit
      * 
      * * to: destination EOSIO account, must be valid and exist
-     * * ppa: origin PPA ID, must be present in the PPA table
+     * * ppa_id: origin PPA ID, must be present in the PPA table
      * * harvest: harvest name, must be present on the Havest table
+     * * quantity: amount that need to be issued
      * * report_hash: hash of the report corresponding to this PPA's Natus Units
      */
     ACTION issue(eosio::name to,
                  std::uint64_t ppa_id,
                  eosio::name harvest,
                  eosio::asset quantity,
-                 std::string report_hash,
                  std::string memo);
 
     /**
      * Plant a Natus Unit
      * 
      * Validations:
-     * * ID: ID of the Natus Unit, must exist and not be planted yet
+     * * PPA ID: ID of the PPA for the Natus Units that will be planted
+     * * Harvest: Harvest name from where the planted Natus belong
+     * * Quantity: amount of NSTU to be planted
      * * Owner: Owner EOSIO Account, must be valid and exist. Also should be the owner of the given Natus Unit ID
+     * * Memo: Optional field for memo
      */
-    ACTION plant(std::uint64_t id,
-                 eosio::name owner);
+    ACTION plant(std::uint64_t ppa_id,
+                 eosio::name harvest_name,
+                 eosio::asset quantity,
+                 eosio::name owner,
+                 std::string memo);
 
     /**
      * Transfer ownership of a given Natus Unit
@@ -292,7 +303,6 @@ public:
      */
     ACTION setconfig(eosio::symbol natus_symbol, std::string version);
 
-    // TODO: Remove this development only action
     ACTION clean(std::string t, eosio::name scope);
 
     // Contract configuration singleton
@@ -302,6 +312,7 @@ public:
     typedef eosio::multi_index<eosio::name{"accounts"}, accounts> accounts_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
     typedef eosio::multi_index<eosio::name{"harvests"}, harvests> harvest_table;
+    typedef eosio::multi_index<eosio::name{"reports"}, reports> reports_table;
     typedef eosio::multi_index<eosio::name{"ppas"}, ppas> ppa_table;
 
 private:

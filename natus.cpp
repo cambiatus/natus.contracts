@@ -76,17 +76,37 @@ void natus::sow(eosio::name name,
     }
 }
 
-void natus::addreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
+void natus::upsertreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
 {
-    // TODO: Implement this
-    // TODO: maybe this can be an upsert
+    require_auth(_self);
+
+    eosio::check(report_hash.length() > 0, "report_hash is empty");
+
+    auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
+    reports_table reports(_self, _self.value);
+    auto report = reports.find(ppa_harvest_id);
+
+    if (report == reports.end())
+    {
+        reports.emplace(_self, [&](auto &r) {
+            r.id = ppa_harvest_id;
+            r.harvest = harvest;
+            r.ppa_id = ppa_id;
+            r.report_hash = report_hash;
+        });
+    }
+    else
+    {
+        reports.modify(report, _self, [&](auto &r) {
+            r.report_hash = report_hash;
+        });
+    }
 }
 
 void natus::issue(eosio::name to,
                   std::uint64_t ppa_id,
                   eosio::name harvest,
                   eosio::asset quantity,
-                  std::string report_hash,
                   std::string memo)
 {
     eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
@@ -132,7 +152,48 @@ void natus::issue(eosio::name to,
     configs_singleton.set(config, _self);
 };
 
-void natus::plant(std::uint64_t id, eosio::name owner){};
+void natus::plant(std::uint64_t ppa_id,
+                  eosio::name harvest_name,
+                  eosio::asset quantity,
+                  eosio::name owner,
+                  std::string memo)
+{
+    auto config = configs_singleton.get();
+
+    // Validate data, memo, quantity, id
+    eosio::check(ppa_id > 0, "invalid ppa_id");
+    eosio::check(quantity.is_valid(), "invalid amount");
+    eosio::check(quantity.amount > 0, "amount must be positive");
+    eosio::check(quantity.symbol == config.natus_symbol, "invalid symbol");
+    eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
+
+    // Validate ppa_harvest_id
+    auto ppa_harvest_id = gen_uuid(ppa_id, harvest_name.value);
+    eosio::check(ppa_harvest_id > 0, "invalid ppa_id or harvest");
+
+    harvest_table harvests(_self, _self.value);
+    auto harvest = harvests.get(harvest_name.value, "cannot find given harvest");
+
+    // Check Harvest to see if it is still available
+    eosio::check(harvest.transferable, "harvest over");
+    eosio::check(_now() <= harvest.available_window, "harvest over");
+    eosio::check(harvest.current_supply > quantity, "supply inconsistent");
+
+    // Make sure the user has the necessary balance for planting
+    accounts_table accounts(_self, owner.value);
+    auto account = accounts.get(ppa_harvest_id, "cant find the proposed balance");
+    eosio::check(account.balance.amount > quantity.amount, "quantity bigger than avaiable balance");
+
+    // Decrease balance
+    accounts.modify(account, _self, [&](auto &a) {
+        a.balance -= quantity;
+    });
+
+    // Decrease harvest
+    harvests.modify(harvest, _self, [&](auto &h) {
+        h.current_supply -= quantity;
+    });
+}
 
 void natus::transfer(eosio::name from,
                      eosio::name to,

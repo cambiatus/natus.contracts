@@ -26,24 +26,6 @@
             ]
         },
         {
-            "name": "addreport",
-            "base": "",
-            "fields": [
-                {
-                    "name": "harvest",
-                    "type": "name"
-                },
-                {
-                    "name": "ppa_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "report_hash",
-                    "type": "string"
-                }
-            ]
-        },
-        {
             "name": "clean",
             "base": "",
             "fields": [
@@ -180,10 +162,6 @@
                     "type": "asset"
                 },
                 {
-                    "name": "report_hash",
-                    "type": "string"
-                },
-                {
                     "name": "memo",
                     "type": "string"
                 }
@@ -194,12 +172,24 @@
             "base": "",
             "fields": [
                 {
-                    "name": "id",
+                    "name": "ppa_id",
                     "type": "uint64"
+                },
+                {
+                    "name": "harvest_name",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
                 },
                 {
                     "name": "owner",
                     "type": "name"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },
@@ -242,7 +232,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "ppa_harvest_id",
+                    "name": "id",
                     "type": "uint64"
                 },
                 {
@@ -372,6 +362,24 @@
             ]
         },
         {
+            "name": "upsertreport",
+            "base": "",
+            "fields": [
+                {
+                    "name": "harvest",
+                    "type": "name"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "report_hash",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "upsertsrv",
             "base": "",
             "fields": [
@@ -403,11 +411,6 @@
         }
     ],
     "actions": [
-        {
-            "name": "addreport",
-            "type": "addreport",
-            "ricardian_contract": ""
-        },
         {
             "name": "clean",
             "type": "clean",
@@ -441,6 +444,11 @@
         {
             "name": "upsertppa",
             "type": "upsertppa",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertreport",
+            "type": "upsertreport",
             "ricardian_contract": ""
         },
         {
