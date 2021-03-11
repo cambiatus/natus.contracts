@@ -34,11 +34,11 @@ erase:
 
 fill:
 	# PPAs
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Sítio Bons Amigos", "amazonrainforest", "-20.378172,-43.416413", "brazil", "A"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Gigante do Itaguaré", "atlanticforest", "-88.378172,9.416413", "brazil", "A"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN La Figueira", "atlanticforest", "-88.378172,9.416413", "brazil", "A"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Morro das Aranhas", "atlanticforest", "-88.378172,9.416413", "brazil", "A"]' -p $(authorization)
-	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Neivo Pires", "pantanal", "-88.378172,9.416413", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Sítio Bons Amigos", "amazonrainforest", "-2.834543,-60.076562", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Gigante do Itaguaré", "atlanticforest", "-22.497423,-45.092014", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN La Figueira", "atlanticforest", "-23.032616,-46.08640", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Morro das Aranhas", "atlanticforest", "-27.468653,-48.381393", "brazil", "A"]' -p $(authorization)
+	cleos -u $(url) push action $(contract) upsertppa '[0, "$(ppa1)", "RPPN Neivo Pires", "pantanal", "-20.197960,56.47900", "brazil", "A"]' -p $(authorization)
 
 	# Harvests
 	cleos -u $(url) push action $(contract) sow '["1", "$(issuer)", 0, 0, "9719479 NSTU", 364, "https://natus.s3-sa-east-1.amazonaws.com/2020/"]' -p $(authorization)
