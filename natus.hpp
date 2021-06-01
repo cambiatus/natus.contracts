@@ -39,79 +39,79 @@ public:
     };
 
     /**
-     * Store the reports for a harvest and ppa pair. It can only hold one harvest/ppa per report
+     * Store the reports for a collection and ppa pair. It can only hold one collection/ppa per report
     */
     TABLE reports
     {
         // Scope is self
         std::uint64_t id;
-        eosio::name harvest;
+        eosio::name collection;
         std::uint64_t ppa_id;
         std::optional<std::string> report_hash;
 
         std::uint64_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(reports, (id)(harvest)(ppa_id)(report_hash));
+        EOSLIB_SERIALIZE(reports, (id)(collection)(ppa_id)(report_hash));
     };
 
     /**
      * Table that holds an account balance
      * Natus Units always are created based on a single PPA resourses as a way to represent its ecosystem services.
-     * For that reason we use both Harvest and PPA to indentify the origin of the 
+     * For that reason we use both Collection and PPA to indentify the origin of the 
      * 
-     * So a single user can have multiple Natus Units balance, each one representing the portion from each PPA/Harvest
+     * So a single user can have multiple Natus Units balance, each one representing the portion from each PPA/Collection
     */
     TABLE accounts
     {
         // Scope is owner
-        std::uint64_t ppa_harvest_id; // Key calculated from merging ppa_id and harvest
-        eosio::asset balance;         // Amount of units
-        std::uint64_t ppa_id;         // PPA that created the Unit
-        eosio::name harvest;          // Harvest where those amounted units comes from
+        std::uint64_t ppa_collection_id; // Key calculated from merging ppa_id and collection
+        eosio::asset balance;            // Amount of units
+        std::uint64_t ppa_id;            // PPA that created the Unit
+        eosio::name collection;          // Collections where those amounted units comes from
 
-        std::uint64_t primary_key() const { return ppa_harvest_id; }
+        std::uint64_t primary_key() const { return ppa_collection_id; }
 
-        EOSLIB_SERIALIZE(accounts, (ppa_harvest_id)(balance)(ppa_id)(harvest));
+        EOSLIB_SERIALIZE(accounts, (ppa_collection_id)(balance)(ppa_id)(collection));
     };
 
     /**
-     * Harvest is the moment where an PPA generates new Natus Unit to the system
+     * Collection is grouping of Natus Units issued into the system.
      * 
-     * It holds configurations and characteristics of the Harvest.
+     * This table holds configurations and characteristics of the Collection. Each collection is handled by an `issuer`
      * 
-     * * id: incremental ID of the harvest
+     * * id: incremental ID of the collection
      * * name: name, used as foreign_key and Units scope
-     * * sellable: if the units of this harvest can be selled by Natus Foundation. This value can change over time
-     * * transferable: if the units can be transferred between users, after a Harvest ends, its no longer possible
+     * * sellable: if the units of this collection can be selled by Natus Foundation. This value can change over time
+     * * transferable: if the units can be transferred between users, after a Collection ends, its no longer possible
      * * max_supply: max possible supply
      * * current_supply: supply in circulation, don't include planted units
      * * issued_supply: supply issued so far, always smaller than max_supply but can be higher than current_supply
      * * issue_window: max date where new units can be issued, after that date it will not be possible to issue new ones
      * * base_uri: base URI for storing the Units certificates
-     * * created_at: creation date for the harvest
+     * * created_at: creation date for the Collection
      */
-    TABLE harvests
+    TABLE collection
     {
         // Scope is _self
         eosio::name name;                       // Eg.: "2k21.1", "2k21.2"
         eosio::name issuer;                     // Issuer account
         bool sellable;                          // Informs if its sellable
         bool transferable;                      // Informs if its transferable
-        eosio::asset max_supply;                // Whole harvest assets
+        eosio::asset max_supply;                // Whole collection assets
         eosio::asset current_supply;            // Supply in circulation, don't include planted units
         eosio::asset issued_supply;             // Everything issued so far
         eosio::time_point_sec available_window; // Max available date (Transfer, Plant or Issue)
-        std::string base_uri;                   // Base URI for the Harvest Units
+        std::string base_uri;                   // Base URI for the Collection Units
         eosio::time_point_sec created_at;       // Date of creation
 
         std::uint64_t primary_key() const { return name.value; }
 
-        EOSLIB_SERIALIZE(harvests, (name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(available_window)(base_uri)(created_at));
+        EOSLIB_SERIALIZE(collection, (name)(issuer)(sellable)(transferable)(max_supply)(current_supply)(issued_supply)(available_window)(base_uri)(created_at));
     };
 
     /**
-     * Eco services provided by a PPA during a Harvest.
-     * It allows for certain services to be informed on a PPA provided services on a given Harvest
+     * Eco services provided by a PPA during a Collection.
+     * It allows for certain services to be informed on a PPA provided services on a given Collection
      * 
      * Available `category`s: `water`, `carbon` and `biodiversity`
      * Available `subcategory`s: `course`, `spring`, `stock`, `vegetation`, `species`, `hotspot`
@@ -122,14 +122,14 @@ public:
         // Scope is _self
         std::uint64_t id;
         std::uint64_t ppa_id;
-        eosio::name harvest;
+        eosio::name collection;
         std::string category;
         std::string subcategory;
         double value;
 
         std::uint64_t primary_key() const { return id; }
 
-        EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(harvest)(category)(subcategory)(value));
+        EOSLIB_SERIALIZE(ecoservices, (id)(ppa_id)(collection)(category)(subcategory)(value));
     };
 
     /**
@@ -157,51 +157,51 @@ public:
     };
 
     /**
-     * Sow a new harvest or update an existing one. 
-     * Harvests usually happen anually but can happen other times in special cases.
+     * Create a new collection or update an existing one. 
+     * Collection usually happen anually but can happen other times in special cases.
      * 
      * Update only changes the following properties: `sellable`, `transferable`, `issue_days`, `base_uri`
      * 
      * Validations:
-     * * id: used to update an existing harvest, use 0 to create a new one
-     * * name: name of the harvest
+     * * id: used to update an existing collection, use 0 to create a new one
+     * * name: name of the collection
      * * issuer: issuer account
-     * * sellable: informs if this harvest units are sellable from Natus Foundation
+     * * sellable: informs if this collection units are sellable from Natus Foundation
      * * transferable: informs if its possible to transfer Units
-     * * max_supply: maximum supply possible on this harvest
+     * * max_supply: maximum supply possible on this collection
      * * issue_days: # of days where the issue will be available 
-     * * base_uri: base URI for all certificates for units on this harvest
+     * * base_uri: base URI for all certificates for units on this collection
      */
-    ACTION sow(eosio::name name,
-               eosio::name issuer,
-               bool sellable,
-               bool transferable,
-               eosio::asset max_supply,
-               std::uint32_t issue_days,
-               std::string base_uri);
+    ACTION upsertcollec(eosio::name name,
+                        eosio::name issuer,
+                        bool sellable,
+                        bool transferable,
+                        eosio::asset max_supply,
+                        std::uint32_t issue_days,
+                        std::string base_uri);
 
     /**
-     * Saves a report for a given Harvest and PPA. Must be unique
+     * Saves a report for a given Collection and PPA. Must be unique
      * 
      * Validations:
-     * * harvest: must exist, combination with ppa must be unique
-     * * ppa_id: id for the ppa, must exist, combination with harvest must be unique
+     * * collection: must exist, combination with ppa must be unique
+     * * ppa_id: id for the ppa, must exist, combination with collection must be unique
      * * report_hash: hash for the report that attest for authenticity of the issued NSTU
      */
-    ACTION upsertreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
+    ACTION upsertreport(eosio::name collection, std::uint64_t ppa_id, std::string report_hash);
 
     /**
      * Issue a new Natus Unit
      * 
      * * to: destination EOSIO account, must be valid and exist
      * * ppa_id: origin PPA ID, must be present in the PPA table
-     * * harvest: harvest name, must be present on the Havest table
+     * * collection: collection name, must be present on the Havest table
      * * quantity: amount that need to be issued
      * * report_hash: hash of the report corresponding to this PPA's Natus Units
      */
     ACTION issue(eosio::name to,
                  std::uint64_t ppa_id,
-                 eosio::name harvest,
+                 eosio::name collection,
                  eosio::asset quantity,
                  std::string memo);
 
@@ -210,13 +210,13 @@ public:
      * 
      * Validations:
      * * PPA ID: ID of the PPA for the Natus Units that will be planted
-     * * Harvest: Harvest name from where the planted Natus belong
+     * * Collection: Collection name from where the planted Natus belong
      * * Quantity: amount of NSTU to be planted
      * * Owner: Owner EOSIO Account, must be valid and exist. Also should be the owner of the given Natus Unit ID
      * * Memo: Optional field for memo
      */
     ACTION plant(std::uint64_t ppa_id,
-                 eosio::name harvest_name,
+                 eosio::name collection_name,
                  eosio::asset quantity,
                  eosio::name owner,
                  std::string memo);
@@ -234,7 +234,7 @@ public:
     ACTION transfer(eosio::name from,
                     eosio::name to,
                     std::uint64_t ppa_id,
-                    eosio::name harvest,
+                    eosio::name collection,
                     eosio::asset quantity,
                     std::string memo);
 
@@ -267,14 +267,14 @@ public:
      * It is an admin only action that insert or update an service. As Natus evolves new ecosystem services will be added
      * Natus Units can have a basket different services with different values that came from the PPA. 
      * 
-     * Services are added at each new harvest and cannot be changed after.
+     * Services are added at each new collection and cannot be changed after.
      * 
-     * Keys are `PPA_id` and `harvest`
+     * Keys are `PPA_id` and `collection`
      * 
      * Validations:
      * * id: ID of an existing service, send it as 0 to insert a new entry
      * * ppa_id: PPA ID of an existing PPA
-     * * harvest_id: ID of an existing harvest
+     * * collection_id: ID of an existing collection
      * * category: must be `water`, `biodiversity` or `carbon`
      * * sub_category: 
      * *    When category is `water`: `course` or `spring`.
@@ -282,7 +282,7 @@ public:
      * *    When category is `biodiversity`: `vegetation`, `species`, `hotspot`
      * * value: double value corresponding to the service provided
      * 
-     * ID   PPA_ID      Harvest     Category     Subcategory     Value
+     * ID   PPA_ID      Collection     Category     Subcategory     Value
      * 1    gigante1    2020.1      water        spring          10
      * 2    aranhas1    2020.1      water        course          3000
      * 3    gigante1    2021.1      carbon       stock           50
@@ -290,7 +290,7 @@ public:
      */
     ACTION upsertsrv(std::uint64_t id,
                      std::uint64_t ppa_id,
-                     eosio::name harvest,
+                     eosio::name collection,
                      std::string category,
                      std::string subcategory,
                      double value);
@@ -311,7 +311,7 @@ public:
 
     typedef eosio::multi_index<eosio::name{"accounts"}, accounts> accounts_table;
     typedef eosio::multi_index<eosio::name{"ecoservices"}, ecoservices> ecoservices_table;
-    typedef eosio::multi_index<eosio::name{"harvests"}, harvests> harvest_table;
+    typedef eosio::multi_index<eosio::name{"collection"}, collection> collection_table;
     typedef eosio::multi_index<eosio::name{"reports"}, reports> reports_table;
     typedef eosio::multi_index<eosio::name{"ppas"}, ppas> ppa_table;
 
@@ -321,9 +321,9 @@ private:
     uint64_t get_available_id(std::string table);
 
     // Saves new entries to the Units table
-    void _mint(eosio::name to, eosio::name issuer, eosio::name harvest, std::uint64_t ppa_id, std::string report_hash);
+    void _mint(eosio::name to, eosio::name issuer, eosio::name collection, std::uint64_t ppa_id, std::string report_hash);
 
     // Add / Subtract balances on the Accounts table
-    void _add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest);
-    void _sub_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name harvest);
+    void _add_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name collection);
+    void _sub_balance(eosio::name owner, eosio::asset quantity, std::uint64_t ppa_id, eosio::name collection);
 };

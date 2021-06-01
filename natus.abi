@@ -1,6 +1,6 @@
 {
     "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
-    "version": "eosio::abi/1.1",
+    "version": "eosio::abi/1.2",
     "types": [],
     "structs": [
         {
@@ -8,7 +8,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "ppa_harvest_id",
+                    "name": "ppa_collection_id",
                     "type": "uint64"
                 },
                 {
@@ -20,7 +20,7 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest",
+                    "name": "collection",
                     "type": "name"
                 }
             ]
@@ -40,63 +40,7 @@
             ]
         },
         {
-            "name": "config",
-            "base": "",
-            "fields": [
-                {
-                    "name": "natus_symbol",
-                    "type": "symbol"
-                },
-                {
-                    "name": "version",
-                    "type": "string"
-                },
-                {
-                    "name": "total_issued_supply",
-                    "type": "asset"
-                },
-                {
-                    "name": "last_ppa_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_ecoservice_id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "ecoservices",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "ppa_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "harvest",
-                    "type": "name"
-                },
-                {
-                    "name": "category",
-                    "type": "string"
-                },
-                {
-                    "name": "subcategory",
-                    "type": "string"
-                },
-                {
-                    "name": "value",
-                    "type": "float64"
-                }
-            ]
-        },
-        {
-            "name": "harvests",
+            "name": "collection",
             "base": "",
             "fields": [
                 {
@@ -142,6 +86,62 @@
             ]
         },
         {
+            "name": "config",
+            "base": "",
+            "fields": [
+                {
+                    "name": "natus_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                },
+                {
+                    "name": "total_issued_supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "last_ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_ecoservice_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "ecoservices",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "collection",
+                    "type": "name"
+                },
+                {
+                    "name": "category",
+                    "type": "string"
+                },
+                {
+                    "name": "subcategory",
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "type": "float64"
+                }
+            ]
+        },
+        {
             "name": "issue",
             "base": "",
             "fields": [
@@ -154,7 +154,7 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest",
+                    "name": "collection",
                     "type": "name"
                 },
                 {
@@ -176,7 +176,7 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest_name",
+                    "name": "collection_name",
                     "type": "name"
                 },
                 {
@@ -236,7 +236,7 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest",
+                    "name": "collection",
                     "type": "name"
                 },
                 {
@@ -264,7 +264,37 @@
             ]
         },
         {
-            "name": "sow",
+            "name": "transfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "ppa_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "collection",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "upsertcollec",
             "base": "",
             "fields": [
                 {
@@ -293,36 +323,6 @@
                 },
                 {
                     "name": "base_uri",
-                    "type": "string"
-                }
-            ]
-        },
-        {
-            "name": "transfer",
-            "base": "",
-            "fields": [
-                {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "to",
-                    "type": "name"
-                },
-                {
-                    "name": "ppa_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "harvest",
-                    "type": "name"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
                     "type": "string"
                 }
             ]
@@ -366,7 +366,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "harvest",
+                    "name": "collection",
                     "type": "name"
                 },
                 {
@@ -392,7 +392,7 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "harvest",
+                    "name": "collection",
                     "type": "name"
                 },
                 {
@@ -432,13 +432,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "sow",
-            "type": "sow",
+            "name": "transfer",
+            "type": "transfer",
             "ricardian_contract": ""
         },
         {
-            "name": "transfer",
-            "type": "transfer",
+            "name": "upsertcollec",
+            "type": "upsertcollec",
             "ricardian_contract": ""
         },
         {
@@ -466,6 +466,13 @@
             "key_types": []
         },
         {
+            "name": "collection",
+            "type": "collection",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "config",
             "type": "config",
             "index_type": "i64",
@@ -475,13 +482,6 @@
         {
             "name": "ecoservices",
             "type": "ecoservices",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "harvests",
-            "type": "harvests",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -501,6 +501,8 @@
             "key_types": []
         }
     ],
+    "kv_tables": {},
     "ricardian_clauses": [],
-    "variants": []
+    "variants": [],
+    "action_results": []
 }

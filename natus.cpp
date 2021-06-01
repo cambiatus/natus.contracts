@@ -14,13 +14,13 @@ void natus::setconfig(eosio::symbol natus_symbol, std::string version)
     configs_singleton.set(configs, _self);
 }
 
-void natus::sow(eosio::name name,
-                eosio::name issuer,
-                bool sellable,
-                bool transferable,
-                eosio::asset max_supply,
-                std::uint32_t issue_days,
-                std::string base_uri)
+void natus::upsertcollec(eosio::name name,
+                         eosio::name issuer,
+                         bool sellable,
+                         bool transferable,
+                         eosio::asset max_supply,
+                         std::uint32_t issue_days,
+                         std::string base_uri)
 {
     require_auth(_self);
 
@@ -46,66 +46,68 @@ void natus::sow(eosio::name name,
 
     eosio::asset initial_asset = eosio::asset(0, config.natus_symbol);
 
-    harvest_table harvest(_self, _self.value);
-    auto existing_harvest = harvest.find(name.value);
+    collection_table collection(_self, _self.value);
+    auto existing_collection = collection.find(name.value);
 
-    if (existing_harvest == harvest.end())
+    if (existing_collection == collection.end())
     {
-        harvest.emplace(_self, [&](auto &h) {
-            h.name = name;
-            h.issuer = issuer;
-            h.sellable = sellable;
-            h.transferable = transferable;
-            h.max_supply = max_supply;
-            h.current_supply = initial_asset;
-            h.issued_supply = initial_asset;
-            h.available_window = issue_window;
-            h.base_uri = base_uri;
-            h.created_at = eosio::current_time_point();
-        });
+        collection.emplace(_self, [&](auto &co)
+                           {
+                               co.name = name;
+                               co.issuer = issuer;
+                               co.sellable = sellable;
+                               co.transferable = transferable;
+                               co.max_supply = max_supply;
+                               co.current_supply = initial_asset;
+                               co.issued_supply = initial_asset;
+                               co.available_window = issue_window;
+                               co.base_uri = base_uri;
+                               co.created_at = eosio::current_time_point();
+                           });
     }
     else
     {
-        harvest.modify(existing_harvest, _self, [&](auto &h) {
-            h.name = name;
-            h.sellable = sellable;
-            h.transferable = transferable;
-            h.available_window = issue_window;
-            h.base_uri = base_uri;
-        });
+        collection.modify(existing_collection, _self, [&](auto &co)
+                          {
+                              co.name = name;
+                              co.sellable = sellable;
+                              co.transferable = transferable;
+                              co.available_window = issue_window;
+                              co.base_uri = base_uri;
+                          });
     }
 }
 
-void natus::upsertreport(eosio::name harvest, std::uint64_t ppa_id, std::string report_hash)
+void natus::upsertreport(eosio::name collection, std::uint64_t ppa_id, std::string report_hash)
 {
     require_auth(_self);
 
     eosio::check(report_hash.length() > 0, "report_hash is empty");
 
-    auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
+    auto ppa_collection_id = gen_uuid(ppa_id, collection.value);
     reports_table reports(_self, _self.value);
-    auto report = reports.find(ppa_harvest_id);
+    auto report = reports.find(ppa_collection_id);
 
     if (report == reports.end())
     {
-        reports.emplace(_self, [&](auto &r) {
-            r.id = ppa_harvest_id;
-            r.harvest = harvest;
-            r.ppa_id = ppa_id;
-            r.report_hash = report_hash;
-        });
+        reports.emplace(_self, [&](auto &r)
+                        {
+                            r.id = ppa_collection_id;
+                            r.collection = collection;
+                            r.ppa_id = ppa_id;
+                            r.report_hash = report_hash;
+                        });
     }
     else
     {
-        reports.modify(report, _self, [&](auto &r) {
-            r.report_hash = report_hash;
-        });
+        reports.modify(report, _self, [&](auto &r)
+                       { r.report_hash = report_hash; });
     }
 }
 
 void natus::issue(eosio::name to,
                   std::uint64_t ppa_id,
-                  eosio::name harvest,
+                  eosio::name collection,
                   eosio::asset quantity,
                   std::string memo)
 {
@@ -123,28 +125,29 @@ void natus::issue(eosio::name to,
     auto itr_ppa = ppa.find(ppa_id);
     eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
 
-    // Validate Harvest
-    harvest_table h(_self, _self.value);
-    const auto &found_harvest = h.get(harvest.value, "cant find harvest with given harvest_id");
+    // Validate Collection
+    collection_table c(_self, _self.value);
+    const auto &found_collection = c.get(collection.value, "cant find collection with given collection_id");
 
-    eosio::require_auth(found_harvest.issuer);
+    eosio::require_auth(found_collection.issuer);
 
     // If it is configured to have a time window
-    if (found_harvest.available_window != eosio::time_point_sec(0))
+    if (found_collection.available_window != eosio::time_point_sec(0))
     {
-        eosio::check(_now() <= found_harvest.available_window, "This harvest is closed, cannot issue more");
+        eosio::check(_now() <= found_collection.available_window, "This collection is closed, cannot issue more");
     }
 
-    auto available_supply = found_harvest.max_supply - found_harvest.issued_supply;
+    auto available_supply = found_collection.max_supply - found_collection.issued_supply;
     eosio::check(quantity.amount <= available_supply.amount, "Cannot issue more than max supply");
 
-    _add_balance(to, quantity, ppa_id, harvest);
+    _add_balance(to, quantity, ppa_id, collection);
 
-    // Update harvest issued_supply
-    h.modify(found_harvest, _self, [&](auto &ha) {
-        ha.current_supply += quantity;
-        ha.issued_supply += quantity;
-    });
+    // Update collection issued_supply
+    c.modify(found_collection, _self, [&](auto &co)
+             {
+                 co.current_supply += quantity;
+                 co.issued_supply += quantity;
+             });
 
     // Update System's total supply
     config = configs_singleton.get();
@@ -153,7 +156,7 @@ void natus::issue(eosio::name to,
 };
 
 void natus::plant(std::uint64_t ppa_id,
-                  eosio::name harvest_name,
+                  eosio::name collection_name,
                   eosio::asset quantity,
                   eosio::name owner,
                   std::string memo)
@@ -167,38 +170,43 @@ void natus::plant(std::uint64_t ppa_id,
     eosio::check(quantity.symbol == config.natus_symbol, "invalid symbol");
     eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    // Validate ppa_harvest_id
-    auto ppa_harvest_id = gen_uuid(ppa_id, harvest_name.value);
-    eosio::check(ppa_harvest_id > 0, "invalid ppa_id or harvest");
+    // Validate ppa_collection_id
+    auto ppa_collection_id = gen_uuid(ppa_id, collection_name.value);
+    eosio::check(ppa_collection_id > 0, "invalid ppa_id or collection");
 
-    harvest_table harvests(_self, _self.value);
-    auto harvest = harvests.get(harvest_name.value, "cannot find given harvest");
+    collection_table collections(_self, _self.value);
+    const auto &collection = collections.get(collection_name.value, "cant find collection with given collection_id");
 
-    // Check Harvest to see if it is still available
-    eosio::check(harvest.transferable, "harvest over");
-    eosio::check(_now() <= harvest.available_window, "harvest over");
-    eosio::check(harvest.current_supply > quantity, "supply inconsistent");
+    if (eosio::get_sender() == owner)
+    {
+        require_auth(owner);
+    }
+    else
+    {
+        require_auth(collection.issuer);
+    }
+
+    // Check Collection to see if it is still available
+    eosio::check(collection.transferable, "this collection doesn't allow transfers");
+    eosio::check(_now() <= collection.available_window, "collection over");
+    eosio::check(collection.current_supply >= quantity, "supply inconsistent");
 
     // Make sure the user has the necessary balance for planting
     accounts_table accounts(_self, owner.value);
-    auto account = accounts.get(ppa_harvest_id, "cant find the proposed balance");
-    eosio::check(account.balance.amount > quantity.amount, "quantity bigger than avaiable balance");
+    auto account = accounts.get(ppa_collection_id, "cant find the proposed balance");
+    eosio::check(account.balance.amount >= quantity.amount, "quantity bigger than avaiable balance");
 
-    // Decrease balance
-    accounts.modify(account, _self, [&](auto &a) {
-        a.balance -= quantity;
-    });
+    _sub_balance(owner, quantity, ppa_id, collection_name);
 
-    // Decrease harvest
-    harvests.modify(harvest, _self, [&](auto &h) {
-        h.current_supply -= quantity;
-    });
+    // Decrease collection
+    collections.modify(collection, _self, [&](auto &co)
+                       { co.current_supply -= quantity; });
 }
 
 void natus::transfer(eosio::name from,
                      eosio::name to,
                      std::uint64_t ppa_id,
-                     eosio::name harvest,
+                     eosio::name collection,
                      eosio::asset quantity,
                      std::string memo)
 {
@@ -208,10 +216,10 @@ void natus::transfer(eosio::name from,
     eosio::check(is_account(to), "destination account doesn't exists");
     eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    // Validate Harvest, if its possible to transfer
-    harvest_table h(_self, _self.value);
-    const auto &found_harvest = h.get(harvest.value, "cant find harvest with given harvest_id");
-    eosio::check(found_harvest.transferable, "Harvest ended");
+    // Validate Collection, if its possible to transfer
+    collection_table h(_self, _self.value);
+    const auto &found_collection = h.get(collection.value, "cant find collection with given collection_id");
+    eosio::check(found_collection.transferable, "Collection already closed");
 
     // Check quantity
     auto config = configs_singleton.get();
@@ -220,8 +228,8 @@ void natus::transfer(eosio::name from,
     eosio::check(quantity.symbol.precision() == 0, "precision must be 0");
     eosio::check(quantity.is_valid(), "invalid quantity");
 
-    _sub_balance(from, quantity, ppa_id, harvest);
-    _add_balance(to, quantity, ppa_id, harvest);
+    _sub_balance(from, quantity, ppa_id, collection);
+    _add_balance(to, quantity, ppa_id, collection);
 }
 
 void natus::upsertppa(std::uint64_t id,
@@ -255,31 +263,33 @@ void natus::upsertppa(std::uint64_t id,
 
     if (id == 0)
     {
-        ppa.emplace(_self, [&](auto &p) {
-            p.id = get_available_id("ppas");
-            p.name = name;
-            p.biome = biome;
-            p.location = location;
-            p.country = country;
-            p.ranking = ranking;
-        });
+        ppa.emplace(_self, [&](auto &p)
+                    {
+                        p.id = get_available_id("ppas");
+                        p.name = name;
+                        p.biome = biome;
+                        p.location = location;
+                        p.country = country;
+                        p.ranking = ranking;
+                    });
     }
     else
     {
         auto itr = ppa.find(id);
         eosio::check(itr != ppa.end(), "cannot find PPA with given ID");
-        ppa.modify(itr, _self, [&](auto &p) {
-            p.name = name;
-            p.location = location;
-            p.country = country;
-            p.ranking = ranking;
-        });
+        ppa.modify(itr, _self, [&](auto &p)
+                   {
+                       p.name = name;
+                       p.location = location;
+                       p.country = country;
+                       p.ranking = ranking;
+                   });
     }
 };
 
 void natus::upsertsrv(std::uint64_t id,
                       std::uint64_t ppa_id,
-                      eosio::name harvest,
+                      eosio::name collection,
                       std::string category,
                       std::string subcategory,
                       double value)
@@ -291,10 +301,10 @@ void natus::upsertsrv(std::uint64_t id,
     auto itr_ppa = ppa.find(ppa_id);
     eosio::check(itr_ppa != ppa.end(), "cant find PPA with given ppa_id");
 
-    // Validate Harvest
-    harvest_table harvests(_self, _self.value);
-    auto itr_harvest = harvests.find(harvest.value);
-    eosio::check(itr_harvest != harvests.end(), "cant find harvest with given harvest_id");
+    // Validate Collection
+    collection_table collections(_self, _self.value);
+    auto itr_collection = collections.find(collection.value);
+    eosio::check(itr_collection != collections.end(), "cant find collection with given collection_id");
 
     // Validate Category
     bool is_category_valid = category == "water" || category == "biodiversity" || category == "carbon";
@@ -319,26 +329,28 @@ void natus::upsertsrv(std::uint64_t id,
     ecoservices_table ecoservices(_self, _self.value);
     if (id == 0)
     {
-        ecoservices.emplace(_self, [&](auto &e) {
-            e.id = get_available_id("ecoservices");
-            e.ppa_id = ppa_id;
-            e.harvest = harvest;
-            e.category = category;
-            e.subcategory = subcategory;
-            e.value = value;
-        });
+        ecoservices.emplace(_self, [&](auto &e)
+                            {
+                                e.id = get_available_id("ecoservices");
+                                e.ppa_id = ppa_id;
+                                e.collection = collection;
+                                e.category = category;
+                                e.subcategory = subcategory;
+                                e.value = value;
+                            });
     }
     else
     {
         auto itr = ecoservices.find(id);
         eosio::check(itr != ecoservices.end(), "cannot find ecoservice with given ID");
-        ecoservices.modify(itr, _self, [&](auto &e) {
-            e.ppa_id = ppa_id;
-            e.harvest = harvest;
-            e.category = category;
-            e.subcategory = subcategory;
-            e.value = value;
-        });
+        ecoservices.modify(itr, _self, [&](auto &e)
+                           {
+                               e.ppa_id = ppa_id;
+                               e.collection = collection;
+                               e.category = category;
+                               e.subcategory = subcategory;
+                               e.value = value;
+                           });
     }
 };
 
@@ -348,7 +360,7 @@ void natus::clean(std::string t, eosio::name scope)
 
     eosio::check(
         t == "ecoservices" ||
-            t == "harvest" ||
+            t == "collection" ||
             t == "ppa" ||
             t == "config" ||
             t == "indexes" ||
@@ -364,12 +376,12 @@ void natus::clean(std::string t, eosio::name scope)
         }
     }
 
-    if (t == "harvest")
+    if (t == "collection")
     {
-        natus::harvest_table harvest(_self, _self.value);
-        for (auto itr = harvest.begin(); itr != harvest.end();)
+        natus::collection_table collection(_self, _self.value);
+        for (auto itr = collection.begin(); itr != collection.end();)
         {
-            itr = harvest.erase(itr);
+            itr = collection.erase(itr);
         }
     }
 
@@ -455,38 +467,38 @@ uint64_t natus::get_available_id(std::string table)
 void natus::_add_balance(eosio::name owner,
                          eosio::asset quantity,
                          std::uint64_t ppa_id,
-                         eosio::name harvest)
+                         eosio::name collection)
 {
-    auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
+    auto ppa_collection_id = gen_uuid(ppa_id, collection.value);
     accounts_table accounts(_self, owner.value);
-    auto account = accounts.find(ppa_harvest_id);
+    auto account = accounts.find(ppa_collection_id);
 
     // Create new balance if there isn't one yet
     if (account == accounts.end())
     {
-        accounts.emplace(_self, [&](auto &a) {
-            a.ppa_harvest_id = ppa_harvest_id;
-            a.balance = quantity;
-            a.ppa_id = ppa_id;
-            a.harvest = harvest;
-        });
+        accounts.emplace(_self, [&](auto &a)
+                         {
+                             a.ppa_collection_id = ppa_collection_id;
+                             a.balance = quantity;
+                             a.ppa_id = ppa_id;
+                             a.collection = collection;
+                         });
     }
     else
     {
-        accounts.modify(account, _self, [&](auto &a) {
-            a.balance += quantity;
-        });
+        accounts.modify(account, _self, [&](auto &a)
+                        { a.balance += quantity; });
     }
 }
 
 void natus::_sub_balance(eosio::name owner,
                          eosio::asset quantity,
                          std::uint64_t ppa_id,
-                         eosio::name harvest)
+                         eosio::name collection)
 {
-    auto ppa_harvest_id = gen_uuid(ppa_id, harvest.value);
+    auto ppa_collection_id = gen_uuid(ppa_id, collection.value);
     accounts_table accounts(_self, owner.value);
-    const auto &account = accounts.get(ppa_harvest_id, "token from ppa and harvest don't exist in account");
+    const auto &account = accounts.get(ppa_collection_id, "token from ppa and collection don't exist in account");
 
     eosio::check(account.balance.amount >= quantity.amount, "quantity is more than account balance");
 
@@ -496,8 +508,7 @@ void natus::_sub_balance(eosio::name owner,
     }
     else
     {
-        accounts.modify(account, _self, [&](auto &a) {
-            a.balance -= quantity;
-        });
+        accounts.modify(account, _self, [&](auto &a)
+                        { a.balance -= quantity; });
     }
 }
